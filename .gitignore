@@ -3,3 +3,10 @@ dist/
 .env
 /.alchemy
 /.prisma-composer
+
+.agents/*
+.claude/*
+.cursor/*
+.devin/*
+
+package-lock.json

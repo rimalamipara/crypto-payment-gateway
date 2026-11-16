@@ -1,19 +1,48 @@
 import { Module } from "@nestjs/common";
-import { AppController } from "./app.controller";
-import { PrismaService } from "./prisma.service";
+import { ConfigModule } from "@nestjs/config";
 
-import { UsersController } from "./users.controller";
-import { UsersService } from "./users.service";
+import { AdminModule } from "./admin/admin.module.ts";
+import { AppController } from "./app.controller.ts";
+import { AuthModule } from "./auth/auth.module.ts";
+import { ColorGameModule } from "./color-game/color-game.module.ts";
+import { configuration } from "./config/index.ts";
+import { IntegrationLogsModule } from "./integration-logs/integration-logs.module.ts";
+import { LobbyModule } from "./lobby/lobby.module.ts";
+import { OxaPayModule } from "./oxapay/oxapay.module.ts";
+import { PaymentsModule } from "./payments/payments.module.ts";
+import { PayoutsModule } from "./payouts/payouts.module.ts";
+import { PokerModule } from "./poker/poker.module.ts";
+import { TeenPattiModule } from "./teen-patti/teen-patti.module.ts";
+import { RummyModule } from "./rummy/rummy.module.ts";
+import { PrismaModule } from "./prisma/prisma.module.ts";
+import { RolesModule } from "./roles/roles.module.ts";
+import { UsersModule } from "./users/users.module.ts";
+import { WalletModule } from "./wallet/wallet.module.ts";
 
 @Module({
-  imports: [],
-  controllers: [
-    AppController,
-    UsersController
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: [".env"],
+      load: [configuration],
+    }),
+    PrismaModule,
+    IntegrationLogsModule,
+    OxaPayModule,
+    AuthModule,
+    RolesModule,
+    UsersModule,
+    WalletModule,
+    PaymentsModule,
+    PayoutsModule,
+    PokerModule,
+    TeenPattiModule,
+    RummyModule,
+    ColorGameModule,
+    LobbyModule,
+    AdminModule,
   ],
-  providers: [
-    PrismaService,
-    UsersService
-  ],
+  controllers: [AppController],
 })
 export class AppModule {}
+

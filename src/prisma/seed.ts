@@ -1,9 +1,8 @@
 import { connectDatabase, db } from "./db.ts";
 
-const users = [
-  { email: "alice@prisma.io", username: "alice", name: "Alice" },
-  { email: "bob@prisma.io", username: "bob", name: "Bob" },
-  { email: "carol@prisma.io", username: "carol", name: "Carol" },
+const defaultRoles = [
+  { name: "user", description: "Default application user" },
+  { name: "admin", description: "Administrator with elevated access" },
 ];
 
 let pendingSeed: Promise<void> | undefined;
@@ -11,15 +10,23 @@ let pendingSeed: Promise<void> | undefined;
 async function runSeed(): Promise<void> {
   await connectDatabase();
 
-  for (const user of users) {
-    await db.orm.public.User.upsert({
-      create: user,
-      update: {},
-      conflictOn: { email: user.email },
+  for (const role of defaultRoles) {
+    await db.orm.public.Role.upsert({
+      create: {
+        name: role.name,
+        description: role.description,
+        isActive: true,
+      },
+      update: {
+        description: role.description,
+        isActive: true,
+      },
+      conflictOn: { name: role.name },
     });
   }
 }
 
+/** Seeds dynamic default roles (`user`, `admin`). Safe to call repeatedly. */
 export function seed(): Promise<void> {
   pendingSeed ??= runSeed().catch((error: unknown) => {
     pendingSeed = undefined;

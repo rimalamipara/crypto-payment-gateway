@@ -8,8 +8,10 @@ import { IoAdapter } from "@nestjs/platform-socket.io";
 import { AppModule } from "./app.module.ts";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter.ts";
 import { setupSwagger } from "./config/swagger.config.ts";
+import { assertValidEnv } from "./config/validate-env.ts";
 
 async function bootstrap() {
+  assertValidEnv();
   const app = await NestFactory.create(AppModule, { rawBody: true });
   app.useWebSocketAdapter(new IoAdapter(app));
   app.enableCors({

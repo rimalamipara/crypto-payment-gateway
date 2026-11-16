@@ -5,7 +5,8 @@ export default () => ({
     baseUrl: process.env.APP_BASE_URL ?? "",
   },
   jwt: {
-    secret: process.env.JWT_SECRET ?? "dev-only-change-me",
+    // No insecure default — validate-env.ts refuses to boot without JWT_SECRET.
+    secret: process.env.JWT_SECRET ?? "",
     expiresIn: process.env.JWT_EXPIRES_IN ?? "1d",
   },
   admin: {

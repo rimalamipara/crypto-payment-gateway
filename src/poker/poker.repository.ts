@@ -225,6 +225,111 @@ export class PokerRepository {
     );
   }
 
+  /**
+   * Multi-instance-safe orphan sweep claim:
+   * one interactive transaction holds pg_try_advisory_xact_lock, then CAS-claims
+   * active→cancelling for eligible hands. Lock releases on commit/rollback
+   * (safe with connection pooling — never session-scoped).
+   *
+   * @param skipHandIds hands this process still holds in memory (do not claim)
+   */
+  async tryOrphanSweepClaims(opts: {
+    beforeIso: string;
+    skipHandIds?: Set<number>;
+  }): Promise<{
+    acquired: boolean;
+    claimedActiveIds: number[];
+    settlingIds: number[];
+    alreadyCancellingIds: number[];
+  }> {
+    const url = process.env.DATABASE_URL;
+    if (!url) {
+      return {
+        acquired: false,
+        claimedActiveIds: [],
+        settlingIds: [],
+        alreadyCancellingIds: [],
+      };
+    }
+
+    const skip = opts.skipHandIds ?? new Set<number>();
+    const { default: pg } = await import("pg");
+    const client = new pg.Client(url);
+    await client.connect();
+    try {
+      await client.query("BEGIN");
+      const lock = await client.query<{ got: boolean }>(
+        `SELECT pg_try_advisory_xact_lock(87201401, 1) AS got`,
+      );
+      if (!lock.rows[0]?.got) {
+        await client.query("ROLLBACK");
+        return {
+          acquired: false,
+          claimedActiveIds: [],
+          settlingIds: [],
+          alreadyCancellingIds: [],
+        };
+      }
+
+      const rows = await client.query<{
+        id: number;
+        status: string;
+        started_at: string;
+      }>(
+        `SELECT id, status, "startedAt" AS started_at
+         FROM "PokerHand"
+         WHERE status IN ('active', 'cancelling', 'settling')
+           AND "startedAt" < $1
+         FOR UPDATE`,
+        [opts.beforeIso],
+      );
+
+      const claimedActiveIds: number[] = [];
+      const settlingIds: number[] = [];
+      const alreadyCancellingIds: number[] = [];
+
+      for (const row of rows.rows) {
+        if (skip.has(row.id)) continue;
+        if (row.status === POKER_HAND_STATUS.SETTLING) {
+          settlingIds.push(row.id);
+          continue;
+        }
+        if (row.status === POKER_HAND_STATUS.CANCELLING) {
+          alreadyCancellingIds.push(row.id);
+          continue;
+        }
+        if (row.status === POKER_HAND_STATUS.ACTIVE) {
+          const upd = await client.query<{ id: number }>(
+            `UPDATE "PokerHand" SET status = $1
+             WHERE id = $2 AND status = $3
+             RETURNING id`,
+            [
+              POKER_HAND_STATUS.CANCELLING,
+              row.id,
+              POKER_HAND_STATUS.ACTIVE,
+            ],
+          );
+          if ((upd.rowCount ?? 0) > 0) {
+            claimedActiveIds.push(row.id);
+          }
+        }
+      }
+
+      await client.query("COMMIT");
+      return {
+        acquired: true,
+        claimedActiveIds,
+        settlingIds,
+        alreadyCancellingIds,
+      };
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw err;
+    } finally {
+      await client.end().catch(() => undefined);
+    }
+  }
+
   async createHandPlayer(data: {
     handId: number;
     userId: number;

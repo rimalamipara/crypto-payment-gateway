@@ -156,56 +156,56 @@ export class PokerService extends EventEmitter implements OnModuleInit {
   }
 
   /**
-   * Orphan sweep: only hands this process does not hold in memory AND that
-   * started before boot. Multi-instance is NOT assumed safe from that alone —
-   * we take a Postgres session advisory lock so at most one process runs the
-   * sweep at a time (others skip the tick).
+   * Orphan sweep: hands not held in this process's memory that started before
+   * boot. Uses pg_try_advisory_xact_lock inside one interactive transaction
+   * together with active→cancelling claims so the lock cannot leak across a
+   * pooled connection (session locks are unsafe with Prisma/pg pools).
    */
   private async sweepOrphanHands(): Promise<void> {
-    const url = process.env.DATABASE_URL;
-    if (!url) return;
-
-    const { default: pg } = await import("pg");
-    const client = new pg.Client(url);
     try {
-      await client.connect();
-      // Fixed key space for poker orphan sweep (classid=87201401, objid=1).
-      const lock = await client.query<{ got: boolean }>(
-        `SELECT pg_try_advisory_lock(87201401, 1) AS got`,
-      );
-      if (!lock.rows[0]?.got) {
-        return; // another instance holds the sweep lock
+      const skipHandIds = new Set<number>();
+      for (const live of this.live.values()) {
+        if (live.hand) skipHandIds.add(live.hand.handId);
       }
-      try {
-        const candidates = await this.repo.listOrphanHandCandidates(
+
+      const claim = await this.repo.tryOrphanSweepClaims({
+        beforeIso: this.processStartedAt.toISOString(),
+        skipHandIds,
+      });
+      if (!claim.acquired) return; // another instance holds the xact lock
+
+      const byId = new Map(
+        (await this.repo.listOrphanHandCandidates(
           this.processStartedAt.toISOString(),
-        );
-        for (const hand of candidates) {
-          const live = this.live.get(hand.tableId);
-          if (live?.hand && live.hand.handId === hand.id) continue;
-          try {
-            if (hand.status === POKER_HAND_STATUS.SETTLING) {
-              await this.finishSettlingFromDb(hand.tableId, hand.id);
-            } else {
-              await this.forceEndHand(hand.tableId, true);
-            }
-          } catch (err) {
-            this.logger.error(
-              `orphan sweep failed table=${hand.tableId} hand=${hand.id}: ${String(err)}`,
-              err instanceof Error ? err.stack : undefined,
-            );
+        )).map((h) => [h.id, h]),
+      );
+
+      const workIds = [
+        ...claim.settlingIds,
+        ...claim.claimedActiveIds,
+        ...claim.alreadyCancellingIds,
+      ];
+      for (const handId of workIds) {
+        const hand = byId.get(handId) ?? (await this.repo.findHand(handId));
+        if (!hand) continue;
+        try {
+          if (hand.status === POKER_HAND_STATUS.SETTLING) {
+            await this.finishSettlingFromDb(hand.tableId, hand.id);
+          } else {
+            await this.forceEndHand(hand.tableId, true);
           }
+        } catch (err) {
+          this.logger.error(
+            `orphan sweep failed table=${hand.tableId} hand=${hand.id}: ${String(err)}`,
+            err instanceof Error ? err.stack : undefined,
+          );
         }
-      } finally {
-        await client.query(`SELECT pg_advisory_unlock(87201401, 1)`);
       }
     } catch (err) {
       this.logger.error(
         `orphan sweep tick failed: ${String(err)}`,
         err instanceof Error ? err.stack : undefined,
       );
-    } finally {
-      await client.end().catch(() => undefined);
     }
   }
 

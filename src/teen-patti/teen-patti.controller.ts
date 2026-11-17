@@ -19,9 +19,14 @@ import { CurrentUser } from "../common/decorators/current-user.decorator.ts";
 import type { AuthenticatedUser } from "../common/interfaces/authenticated-user.interface.ts";
 import { TpBuyInDto } from "./dto/teen-patti.dto.ts";
 import { TeenPattiService } from "./teen-patti.service.ts";
+import {
+  AllowWhenDisabled,
+  RequiresGame,
+} from "../game-settings/requires-game.decorator.ts";
 
 @ApiTags("teen-patti")
 @ApiBearerAuth("access-token")
+@RequiresGame("teen-patti")
 @Controller("teen-patti")
 export class TeenPattiController {
   constructor(@Inject(TeenPattiService) private readonly tp: TeenPattiService) {}
@@ -52,6 +57,7 @@ export class TeenPattiController {
     return this.tp.buyIn(user.id, id, dto);
   }
 
+  @AllowWhenDisabled()
   @Post("tables/:id/cash-out")
   @ApiOperation({ summary: "Cash out remaining stack to wallet" })
   cashOut(

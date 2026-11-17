@@ -69,9 +69,10 @@ export type PendingBetLike = {
 };
 
 /**
- * Pick the digit 0–9 that minimizes total player payouts (max house profit).
- * Ties broken by lower total payout, then by random among equal minima so
- * the pattern is not always the same digit.
+ * When admin has not preset a digit: pick 0–9 that is best for the house —
+ * maximum house P/L (volume − player payouts). That is the lowest player
+ * payout: a small house loss if every digit loses, or the highest house
+ * profit otherwise. Ties broken at random among equal best digits.
  */
 export function pickProfitMaximizingResult(
   bets: PendingBetLike[],
@@ -82,25 +83,31 @@ export function pickProfitMaximizingResult(
     return randomPick(10);
   }
 
-  let bestPayout = Number.POSITIVE_INFINITY;
+  let volume = 0;
+  for (const bet of bets) {
+    volume += Number(bet.amountUsd);
+  }
+  volume = roundMoney(volume);
+
+  let bestHouse = Number.NEGATIVE_INFINITY;
   const winners: number[] = [];
 
   for (let n = 0; n <= 9; n++) {
-    let total = 0;
+    let payout = 0;
     for (const bet of bets) {
-      total += calcPayout(
+      payout += calcPayout(
         bet.betType as BetType,
         bet.selection,
         Number(bet.amountUsd),
         n,
       );
     }
-    total = roundMoney(total);
-    if (total < bestPayout - 1e-9) {
-      bestPayout = total;
+    const house = roundMoney(volume - roundMoney(payout));
+    if (house > bestHouse + 1e-9) {
+      bestHouse = house;
       winners.length = 0;
       winners.push(n);
-    } else if (Math.abs(total - bestPayout) <= 1e-9) {
+    } else if (Math.abs(house - bestHouse) <= 1e-9) {
       winners.push(n);
     }
   }

@@ -17,9 +17,13 @@ import { CurrentUser } from "../common/decorators/current-user.decorator.ts";
 import type { AuthenticatedUser } from "../common/interfaces/authenticated-user.interface.ts";
 import { PlaceColorBetDto } from "./dto/color-game.dto.ts";
 import { ColorGameService } from "./color-game.service.ts";
+import {
+  RequiresGame,
+} from "../game-settings/requires-game.decorator.ts";
 
 @ApiTags("color-game")
 @ApiBearerAuth("access-token")
+@RequiresGame("color")
 @Controller("color-game")
 export class ColorGameController {
   constructor(

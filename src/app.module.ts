@@ -6,6 +6,10 @@ import { AppController } from "./app.controller.ts";
 import { AuthModule } from "./auth/auth.module.ts";
 import { ColorGameModule } from "./color-game/color-game.module.ts";
 import { configuration } from "./config/index.ts";
+import {
+  GameSettingsAdminModule,
+  GameSettingsModule,
+} from "./game-settings/game-settings.module.ts";
 import { IntegrationLogsModule } from "./integration-logs/integration-logs.module.ts";
 import { LobbyModule } from "./lobby/lobby.module.ts";
 import { OxaPayModule } from "./oxapay/oxapay.module.ts";
@@ -39,6 +43,8 @@ import { WalletModule } from "./wallet/wallet.module.ts";
     TeenPattiModule,
     RummyModule,
     ColorGameModule,
+    GameSettingsModule,
+    GameSettingsAdminModule,
     LobbyModule,
     AdminModule,
   ],

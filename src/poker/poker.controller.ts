@@ -20,9 +20,14 @@ import type { AuthenticatedUser } from "../common/interfaces/authenticated-user.
 import { BuyInDto, JoinStakeDto } from "./dto/poker.dto.ts";
 import { PokerService } from "./poker.service.ts";
 import { POKER_STAKE_TEMPLATES } from "./poker.stakes.ts";
+import {
+  AllowWhenDisabled,
+  RequiresGame,
+} from "../game-settings/requires-game.decorator.ts";
 
 @ApiTags("poker")
 @ApiBearerAuth("access-token")
+@RequiresGame("poker")
 @Controller("poker")
 export class PokerController {
   constructor(@Inject(PokerService) private readonly poker: PokerService) {}
@@ -74,6 +79,7 @@ export class PokerController {
     return this.poker.buyIn(user.id, id, dto);
   }
 
+  @AllowWhenDisabled()
   @Post("tables/:id/cash-out")
   @ApiOperation({ summary: "Cash out remaining stack to wallet" })
   cashOut(

@@ -1,6 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 
 import { ColorGameService } from "../color-game/color-game.service.ts";
+import { GameSettingsService } from "../game-settings/game-settings.service.ts";
 import { PokerService } from "../poker/poker.service.ts";
 import { RummyService } from "../rummy/rummy.service.ts";
 import { TeenPattiService } from "../teen-patti/teen-patti.service.ts";
@@ -28,21 +29,24 @@ export class LobbyService {
     @Inject(TeenPattiService) private readonly teenPatti: TeenPattiService,
     @Inject(RummyService) private readonly rummy: RummyService,
     @Inject(ColorGameService) private readonly colorGame: ColorGameService,
+    @Inject(GameSettingsService) private readonly gameSettings: GameSettingsService,
   ) {}
 
   async overview(userId: number) {
-    const [pokerTables, tpTables, rummyTables, color, pokerStats] =
+    const [pokerTables, tpTables, rummyTables, color, pokerStats, enabled] =
       await Promise.all([
         this.poker.listTablesForUser(),
         this.teenPatti.listTablesForUser(),
         this.rummy.listTablesForUser(),
         this.colorGame.getCurrent(),
         this.poker.myStats(userId),
+        this.gameSettings.enabledMap(),
       ]);
 
     return {
       games: {
         poker: {
+          enabled: enabled.poker,
           ...summarizeTables(pokerTables),
           featuredTables: pokerTables
             .filter((t) => t.status === "open")
@@ -60,9 +64,13 @@ export class LobbyService {
               status: t.status,
             })),
         },
-        teenPatti: summarizeTables(tpTables),
-        rummy: summarizeTables(rummyTables),
+        teenPatti: {
+          enabled: enabled["teen-patti"],
+          ...summarizeTables(tpTables),
+        },
+        rummy: { enabled: enabled.rummy, ...summarizeTables(rummyTables) },
         color: {
+          enabled: enabled.color,
           periodNo: color.periodNo,
           periodName: color.periodName,
           status: color.status,

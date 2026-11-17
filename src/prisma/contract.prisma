@@ -446,3 +446,12 @@ model RummyHand {
   @@unique([tableId, handNo])
   @@index([tableId, startedAt])
 }
+
+/// Admin on/off switch per game ("poker" | "teen-patti" | "rummy" | "color"). Missing row = enabled.
+model GameSetting {
+  id        Int      @id @default(autoincrement())
+  game      String   @unique
+  enabled   Boolean  @default(true)
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}

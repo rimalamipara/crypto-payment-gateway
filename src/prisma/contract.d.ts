@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'51917b5711d027116b7b638e083d13171c609508922b22985aa06a4838e8439a'>;
+  StorageHashBase<'83a1ad5965352bf8456d472d0ed88453047a80fe462856a8eb151446c2a313d5'>;
 export type ExecutionHash =
-  ExecutionHashBase<'6b5794539ddbc54ae0a4eb9b1a0b4c9d55ed5353b7bac84f657c28ff3b3f9463'>;
+  ExecutionHashBase<'6d64aa872ecb834619a31a9b7ac51bc59869aca790d515b4c86a621f7a12132e'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -347,6 +347,14 @@ export namespace Models {
     bets: public_ColorBet[];
     readonly [RelationKeys]?: 'bets';
   };
+  export type public_GameSetting = {
+    createdAt: FieldOutputTypes['public']['GameSetting']['createdAt'];
+    enabled: FieldOutputTypes['public']['GameSetting']['enabled'];
+    game: FieldOutputTypes['public']['GameSetting']['game'];
+    id: FieldOutputTypes['public']['GameSetting']['id'];
+    updatedAt: FieldOutputTypes['public']['GameSetting']['updatedAt'];
+    readonly [RelationKeys]?: never;
+  };
   export type public_Payment = {
     amount: FieldOutputTypes['public']['Payment']['amount'];
     createdAt: FieldOutputTypes['public']['Payment']['createdAt'];
@@ -661,6 +669,7 @@ export declare const models: {
     ApiRequestLog: Models.public_ApiRequestLog;
     ColorBet: Models.public_ColorBet;
     ColorRound: Models.public_ColorRound;
+    GameSetting: Models.public_GameSetting;
     Payment: Models.public_Payment;
     Payout: Models.public_Payout;
     PokerAction: Models.public_PokerAction;
@@ -1259,6 +1268,53 @@ type ContractBase = Omit<
                   readonly unique: false;
                 },
               ];
+              foreignKeys: readonly [];
+            };
+            readonly GameSetting: {
+              columns: {
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly many: false;
+                };
+                readonly enabled: {
+                  readonly dataType: 'pg/bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', true>;
+                  };
+                  readonly many: false;
+                };
+                readonly game: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly updatedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['game'] }];
+              indexes: readonly [];
               foreignKeys: readonly [];
             };
             readonly Payment: {
@@ -3376,6 +3432,10 @@ type ContractBase = Omit<
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'ColorRound';
     };
+    readonly GameSetting: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'GameSetting';
+    };
     readonly Payment: { readonly namespace: 'public' & NamespaceId; readonly model: 'Payment' };
     readonly Payout: { readonly namespace: 'public' & NamespaceId; readonly model: 'Payout' };
     readonly PokerAction: {
@@ -3842,6 +3902,48 @@ type ContractBase = Omit<
                 readonly settledAt: { readonly column: 'settledAt' };
                 readonly startsAt: { readonly column: 'startsAt' };
                 readonly status: { readonly column: 'status' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
+              };
+            };
+          };
+          readonly GameSetting: {
+            readonly fields: {
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly enabled: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
+              readonly game: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+            };
+            readonly relations: Record<string, never>;
+            readonly storage: {
+              readonly table: 'GameSetting';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly enabled: { readonly column: 'enabled' };
+                readonly game: { readonly column: 'game' };
+                readonly id: { readonly column: 'id' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
             };
@@ -5652,6 +5754,15 @@ type ContractBase = Omit<
           readonly onUpdate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'ColorRound';
+            readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'GameSetting';
             readonly field: 'updatedAt';
             readonly namespace: 'public';
           };

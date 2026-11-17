@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   type OnModuleInit,
 } from "@nestjs/common";
 import { EventEmitter } from "node:events";
@@ -39,6 +40,7 @@ import {
   TURN_TIMEOUT_MS,
 } from "./poker.constants.ts";
 import { PokerRepository } from "./poker.repository.ts";
+import { GameSettingsService } from "../game-settings/game-settings.service.ts";
 
 /** PostgreSQL unique_violation — do not match on index name (can drift). */
 function isPgUniqueViolation(err: unknown): boolean {
@@ -101,6 +103,10 @@ export class PokerService extends EventEmitter implements OnModuleInit {
   constructor(
     @Inject(PokerRepository) private readonly repo: PokerRepository,
     @Inject(WalletService) private readonly wallet: WalletService,
+    /** Optional so services can still be built by hand (tests); Nest always injects it. */
+    @Optional()
+    @Inject(GameSettingsService)
+    private readonly gameSettings?: GameSettingsService,
   ) {
     super();
     this.setMaxListeners(100);
@@ -651,6 +657,8 @@ export class PokerService extends EventEmitter implements OnModuleInit {
   async maybeStartHand(tableId: number): Promise<void> {
     const table = await this.repo.findTable(tableId);
     if (!table || table.status !== POKER_TABLE_STATUS.OPEN) return;
+    // Game switched off by an admin: finish hands in progress, start no new ones.
+    if (this.gameSettings && !(await this.gameSettings.isEnabled("poker"))) return;
 
     const live = this.getLive(tableId);
     if (live.hand) return;

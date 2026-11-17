@@ -156,8 +156,8 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Admin preset/force still wins. Otherwise pick the digit that pays out
-   * the least to players (house-favoring WinGo settle).
+   * Admin preset/force wins. If unset, auto-declare the digit with the best
+   * house P/L (highest profit, or lowest loss if every digit loses).
    */
   private pickResult(
     preset: number | null | undefined,

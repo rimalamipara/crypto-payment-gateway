@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   type OnModuleInit,
 } from "@nestjs/common";
 import { EventEmitter } from "node:events";
@@ -32,6 +33,7 @@ import {
   RUMMY_TURN_TIMEOUT_MS,
 } from "./rummy.constants.ts";
 import { RummyRepository } from "./rummy.repository.ts";
+import { GameSettingsService } from "../game-settings/game-settings.service.ts";
 
 export type RummyRoomEvent =
   | { type: "table_state"; tableId: number; payload: unknown }
@@ -59,6 +61,10 @@ export class RummyService extends EventEmitter implements OnModuleInit {
   constructor(
     @Inject(RummyRepository) private readonly repo: RummyRepository,
     @Inject(WalletService) private readonly wallet: WalletService,
+    /** Optional so services can still be built by hand (tests); Nest always injects it. */
+    @Optional()
+    @Inject(GameSettingsService)
+    private readonly gameSettings?: GameSettingsService,
   ) {
     super();
     this.setMaxListeners(100);
@@ -375,6 +381,8 @@ export class RummyService extends EventEmitter implements OnModuleInit {
   async maybeStartHand(tableId: number): Promise<void> {
     const table = await this.repo.findTable(tableId);
     if (!table || table.status !== RUMMY_TABLE_STATUS.OPEN) return;
+    // Game switched off by an admin: finish hands in progress, start no new ones.
+    if (this.gameSettings && !(await this.gameSettings.isEnabled("rummy"))) return;
 
     const live = this.getLive(tableId);
     if (live.hand) return;

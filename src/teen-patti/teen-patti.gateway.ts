@@ -18,6 +18,7 @@ import type { Server, Socket } from "socket.io";
 import type { TeenPattiActionType } from "./teen-patti.engine.ts";
 import type { TpRoomEvent } from "./teen-patti.service.ts";
 import { TeenPattiService } from "./teen-patti.service.ts";
+import { GameSettingsService } from "../game-settings/game-settings.service.ts";
 
 interface AuthedSocket extends Socket {
   data: {
@@ -41,7 +42,17 @@ export class TeenPattiGateway
     @Inject(TeenPattiService) private readonly tp: TeenPattiService,
     @Inject(JwtService) private readonly jwt: JwtService,
     @Inject(ConfigService) private readonly config: ConfigService,
+    @Inject(GameSettingsService) private readonly gameSettings: GameSettingsService,
   ) {}
+
+  /** Players cannot join or read a table of a game an admin switched off. */
+  private async unavailable(): Promise<{ ok: false; error: string } | null> {
+    if (await this.gameSettings.isEnabled("teen-patti")) return null;
+    return {
+      ok: false,
+      error: "Teen Patti is currently unavailable. Please try again later.",
+    };
+  }
 
   afterInit(): void {
     this.tp.on("room", (event: TpRoomEvent) => {
@@ -126,6 +137,11 @@ export class TeenPattiGateway
   ) {
     const user = client.data.user;
     if (!user) return { ok: false, error: "Unauthorized" };
+    const off = await this.unavailable();
+    if (off) {
+      client.emit("error", { message: off.error });
+      return off;
+    }
     const tableId = Number(body?.tableId);
     if (!tableId) return { ok: false, error: "tableId required" };
 
@@ -176,6 +192,11 @@ export class TeenPattiGateway
   ) {
     const user = client.data.user;
     if (!user) return { ok: false };
+    const off = await this.unavailable();
+    if (off) {
+      client.emit("error", { message: off.error });
+      return off;
+    }
     const state = await this.tp.buildTableState(Number(body.tableId), user.id);
     client.emit("table_state", state);
     return { ok: true };

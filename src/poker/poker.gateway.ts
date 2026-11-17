@@ -18,6 +18,7 @@ import type { Server, Socket } from "socket.io";
 import type { PokerActionType } from "./poker.engine.ts";
 import type { PokerRoomEvent } from "./poker.service.ts";
 import { PokerService } from "./poker.service.ts";
+import { GameSettingsService } from "../game-settings/game-settings.service.ts";
 
 interface AuthedSocket extends Socket {
   data: {
@@ -41,7 +42,17 @@ export class PokerGateway
     @Inject(PokerService) private readonly poker: PokerService,
     @Inject(JwtService) private readonly jwt: JwtService,
     @Inject(ConfigService) private readonly config: ConfigService,
+    @Inject(GameSettingsService) private readonly gameSettings: GameSettingsService,
   ) {}
+
+  /** Players cannot join or read a table of a game an admin switched off. */
+  private async unavailable(): Promise<{ ok: false; error: string } | null> {
+    if (await this.gameSettings.isEnabled("poker")) return null;
+    return {
+      ok: false,
+      error: "Poker is currently unavailable. Please try again later.",
+    };
+  }
 
   afterInit(): void {
     this.poker.on("room", (event: PokerRoomEvent) => {
@@ -126,6 +137,11 @@ export class PokerGateway
   ) {
     const user = client.data.user;
     if (!user) return { ok: false, error: "Unauthorized" };
+    const off = await this.unavailable();
+    if (off) {
+      client.emit("error", { message: off.error });
+      return off;
+    }
     const tableId = Number(body?.tableId);
     if (!tableId) return { ok: false, error: "tableId required" };
 
@@ -182,6 +198,11 @@ export class PokerGateway
   ) {
     const user = client.data.user;
     if (!user) return { ok: false };
+    const off = await this.unavailable();
+    if (off) {
+      client.emit("error", { message: off.error });
+      return off;
+    }
     const state = await this.poker.buildTableState(
       Number(body.tableId),
       user.id,

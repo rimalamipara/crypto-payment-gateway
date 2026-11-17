@@ -19,9 +19,14 @@ import { CurrentUser } from "../common/decorators/current-user.decorator.ts";
 import type { AuthenticatedUser } from "../common/interfaces/authenticated-user.interface.ts";
 import { RummyBuyInDto } from "./dto/rummy.dto.ts";
 import { RummyService } from "./rummy.service.ts";
+import {
+  AllowWhenDisabled,
+  RequiresGame,
+} from "../game-settings/requires-game.decorator.ts";
 
 @ApiTags("rummy")
 @ApiBearerAuth("access-token")
+@RequiresGame("rummy")
 @Controller("rummy")
 export class RummyController {
   constructor(@Inject(RummyService) private readonly rummy: RummyService) {}
@@ -52,6 +57,7 @@ export class RummyController {
     return this.rummy.buyIn(user.id, id, dto);
   }
 
+  @AllowWhenDisabled()
   @Post("tables/:id/cash-out")
   @ApiOperation({ summary: "Cash out remaining stack to wallet" })
   cashOut(

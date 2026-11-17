@@ -17,6 +17,7 @@ import type { Server, Socket } from "socket.io";
 
 import type { RummyRoomEvent } from "./rummy.service.ts";
 import { RummyService } from "./rummy.service.ts";
+import { GameSettingsService } from "../game-settings/game-settings.service.ts";
 
 interface AuthedSocket extends Socket {
   data: {
@@ -40,7 +41,17 @@ export class RummyGateway
     @Inject(RummyService) private readonly rummy: RummyService,
     @Inject(JwtService) private readonly jwt: JwtService,
     @Inject(ConfigService) private readonly config: ConfigService,
+    @Inject(GameSettingsService) private readonly gameSettings: GameSettingsService,
   ) {}
+
+  /** Players cannot join or read a table of a game an admin switched off. */
+  private async unavailable(): Promise<{ ok: false; error: string } | null> {
+    if (await this.gameSettings.isEnabled("rummy")) return null;
+    return {
+      ok: false,
+      error: "Rummy is currently unavailable. Please try again later.",
+    };
+  }
 
   afterInit(): void {
     this.rummy.on("room", (event: RummyRoomEvent) => {
@@ -125,6 +136,11 @@ export class RummyGateway
   ) {
     const user = client.data.user;
     if (!user) return { ok: false, error: "Unauthorized" };
+    const off = await this.unavailable();
+    if (off) {
+      client.emit("error", { message: off.error });
+      return off;
+    }
     const tableId = Number(body?.tableId);
     if (!tableId) return { ok: false, error: "tableId required" };
     await client.join(this.room(tableId));
@@ -180,6 +196,11 @@ export class RummyGateway
   ) {
     const user = client.data.user;
     if (!user) return { ok: false };
+    const off = await this.unavailable();
+    if (off) {
+      client.emit("error", { message: off.error });
+      return off;
+    }
     const state = await this.rummy.buildTableState(Number(body.tableId), user.id);
     client.emit("table_state", state);
     return { ok: true };

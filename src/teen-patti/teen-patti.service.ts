@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   type OnModuleInit,
 } from "@nestjs/common";
 import { EventEmitter } from "node:events";
@@ -32,6 +33,7 @@ import {
   TP_TURN_TIMEOUT_MS,
 } from "./teen-patti.constants.ts";
 import { TeenPattiRepository } from "./teen-patti.repository.ts";
+import { GameSettingsService } from "../game-settings/game-settings.service.ts";
 
 export type TpRoomEvent =
   | { type: "table_state"; tableId: number; payload: unknown }
@@ -58,6 +60,10 @@ export class TeenPattiService extends EventEmitter implements OnModuleInit {
   constructor(
     @Inject(TeenPattiRepository) private readonly repo: TeenPattiRepository,
     @Inject(WalletService) private readonly wallet: WalletService,
+    /** Optional so services can still be built by hand (tests); Nest always injects it. */
+    @Optional()
+    @Inject(GameSettingsService)
+    private readonly gameSettings?: GameSettingsService,
   ) {
     super();
     this.setMaxListeners(100);
@@ -289,6 +295,8 @@ export class TeenPattiService extends EventEmitter implements OnModuleInit {
   async maybeStartHand(tableId: number): Promise<void> {
     const table = await this.repo.findTable(tableId);
     if (!table || table.status !== TP_TABLE_STATUS.OPEN) return;
+    // Game switched off by an admin: finish hands in progress, start no new ones.
+    if (this.gameSettings && !(await this.gameSettings.isEnabled("teen-patti"))) return;
 
     const live = this.getLive(tableId);
     if (live.hand) return;

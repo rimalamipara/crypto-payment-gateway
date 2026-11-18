@@ -18,6 +18,7 @@ import { PayoutsModule } from "./payouts/payouts.module.ts";
 import { PokerModule } from "./poker/poker.module.ts";
 import { TeenPattiModule } from "./teen-patti/teen-patti.module.ts";
 import { RummyModule } from "./rummy/rummy.module.ts";
+import { SecureTransportModule } from "./secure-transport/secure-transport.module.ts";
 import { PrismaModule } from "./prisma/prisma.module.ts";
 import { RolesModule } from "./roles/roles.module.ts";
 import { UsersModule } from "./users/users.module.ts";
@@ -43,6 +44,7 @@ import { WalletModule } from "./wallet/wallet.module.ts";
     TeenPattiModule,
     RummyModule,
     ColorGameModule,
+    SecureTransportModule,
     GameSettingsModule,
     GameSettingsAdminModule,
     LobbyModule,

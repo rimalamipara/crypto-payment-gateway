@@ -19,6 +19,7 @@ import type { TeenPattiActionType } from "./teen-patti.engine.ts";
 import type { TpRoomEvent } from "./teen-patti.service.ts";
 import { TeenPattiService } from "./teen-patti.service.ts";
 import { GameSettingsService } from "../game-settings/game-settings.service.ts";
+import { ResponseCryptoService } from "../secure-transport/response-crypto.service.ts";
 
 interface AuthedSocket extends Socket {
   data: {
@@ -43,6 +44,7 @@ export class TeenPattiGateway
     @Inject(JwtService) private readonly jwt: JwtService,
     @Inject(ConfigService) private readonly config: ConfigService,
     @Inject(GameSettingsService) private readonly gameSettings: GameSettingsService,
+    @Inject(ResponseCryptoService) private readonly crypto: ResponseCryptoService,
   ) {}
 
   /** Players cannot join or read a table of a game an admin switched off. */
@@ -111,7 +113,7 @@ export class TeenPattiGateway
         const userId = (s.data as AuthedSocket["data"]).user?.id ?? null;
         try {
           const state = await this.tp.buildTableState(event.tableId, userId);
-          s.emit("table_state", state);
+          s.emit("table_state", this.crypto.sealForSocket(s, "table_state", state));
         } catch (err) {
           this.logger.warn(`table_state emit failed: ${String(err)}`);
         }
@@ -147,7 +149,7 @@ export class TeenPattiGateway
 
     await client.join(this.room(tableId));
     const state = await this.tp.buildTableState(tableId, user.id);
-    client.emit("table_state", state);
+    client.emit("table_state", this.crypto.sealForSocket(client, "table_state", state));
     return { ok: true };
   }
 
@@ -198,7 +200,7 @@ export class TeenPattiGateway
       return off;
     }
     const state = await this.tp.buildTableState(Number(body.tableId), user.id);
-    client.emit("table_state", state);
+    client.emit("table_state", this.crypto.sealForSocket(client, "table_state", state));
     return { ok: true };
   }
 }

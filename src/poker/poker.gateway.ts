@@ -19,6 +19,7 @@ import type { PokerActionType } from "./poker.engine.ts";
 import type { PokerRoomEvent } from "./poker.service.ts";
 import { PokerService } from "./poker.service.ts";
 import { GameSettingsService } from "../game-settings/game-settings.service.ts";
+import { ResponseCryptoService } from "../secure-transport/response-crypto.service.ts";
 
 interface AuthedSocket extends Socket {
   data: {
@@ -43,6 +44,7 @@ export class PokerGateway
     @Inject(JwtService) private readonly jwt: JwtService,
     @Inject(ConfigService) private readonly config: ConfigService,
     @Inject(GameSettingsService) private readonly gameSettings: GameSettingsService,
+    @Inject(ResponseCryptoService) private readonly crypto: ResponseCryptoService,
   ) {}
 
   /** Players cannot join or read a table of a game an admin switched off. */
@@ -111,7 +113,7 @@ export class PokerGateway
         const userId = (s.data as AuthedSocket["data"]).user?.id ?? null;
         try {
           const state = await this.poker.buildTableState(event.tableId, userId);
-          s.emit("table_state", state);
+          s.emit("table_state", this.crypto.sealForSocket(s, "table_state", state));
         } catch (err) {
           this.logger.warn(`table_state emit failed: ${String(err)}`);
         }
@@ -147,7 +149,7 @@ export class PokerGateway
 
     await client.join(this.room(tableId));
     const state = await this.poker.buildTableState(tableId, user.id);
-    client.emit("table_state", state);
+    client.emit("table_state", this.crypto.sealForSocket(client, "table_state", state));
     return { ok: true };
   }
 
@@ -207,7 +209,7 @@ export class PokerGateway
       Number(body.tableId),
       user.id,
     );
-    client.emit("table_state", state);
+    client.emit("table_state", this.crypto.sealForSocket(client, "table_state", state));
     return { ok: true };
   }
 }

@@ -1,0 +1,48 @@
+# Render Blueprint for the backend. In Render: New > Blueprint > pick this repo.
+# Values marked `sync: false` are secrets: Render asks for them on first deploy and
+# they are never stored in this file. See the comments for what to enter.
+services:
+  - type: web
+    name: crypto-payment-gateway
+    runtime: node
+    plan: free # free web services sleep after 15 min without traffic; use a paid plan for real players
+    region: singapore # next to the Neon database (aws-ap-southeast-1)
+    branch: main
+    autoDeploy: true
+    # tsdown is a devDependency, so include dev dependencies for the build.
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /crypto/public-key
+    envVars:
+      - key: NODE_VERSION
+        value: 22.18.0
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY # Render terminates HTTPS; trust X-Forwarded-Proto for HSTS
+        value: "1"
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: OXAPAY_SANDBOX # keep true until you intend to take real payments
+        value: "true"
+      - key: JWT_SECRET # generated once by Render (>= 32 random bytes)
+        generateValue: true
+      - key: DATABASE_URL # Neon POOLED url (the one with "-pooler" in the host)
+        sync: false
+      - key: ADMIN_EMAIL # bootstrap admin account created on first start
+        sync: false
+      - key: ADMIN_PASSWORD # choose a strong new password (not the local one)
+        sync: false
+      - key: RESPONSE_ENC_PRIVATE_KEY # node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+        sync: false
+      - key: CORS_ORIGINS # https://user-site,https://admin-site (leave empty until the frontends exist)
+        sync: false
+      - key: APP_BASE_URL # this service's public https URL, once Render has assigned it
+        sync: false
+      - key: OXAPAY_MERCHANT_API_KEY
+        sync: false
+      - key: OXAPAY_PAYOUT_API_KEY
+        sync: false
+      - key: OXAPAY_CALLBACK_URL # https://<this-service>.onrender.com/payments/webhook
+        sync: false
+      - key: OXAPAY_PAYOUT_CALLBACK_URL # https://<this-service>.onrender.com/payouts/webhook
+        sync: false

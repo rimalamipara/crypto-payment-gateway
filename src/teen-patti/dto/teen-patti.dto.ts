@@ -30,8 +30,8 @@ export class TpBuyInDto {
 
 export class TpActionDto {
   @ApiProperty({ enum: ["pack", "blind", "chaal", "see", "show"] })
-  @IsIn(["pack", "blind", "chaal", "see", "show"])
-  action!: "pack" | "blind" | "chaal" | "see" | "show";
+  @IsIn(["pack", "blind", "chaal", "raise", "see", "show"])
+  action!: "pack" | "blind" | "chaal" | "raise" | "see" | "show";
 }
 
 export class CreateTpTableDto {

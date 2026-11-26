@@ -46,3 +46,7 @@ services:
         sync: false
       - key: OXAPAY_PAYOUT_CALLBACK_URL # https://<this-service>.onrender.com/payouts/webhook
         sync: false
+      - key: GOOGLE_CLIENT_ID # Google OAuth client id; POST /auth/google is disabled until set
+        sync: false
+      - key: KYC_REQUIRED_FOR_WITHDRAWAL # "true" blocks withdrawals until KYC is approved
+        value: "false"

@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'29c9de69103315ec095b3ed71d72c8f8a9718498a58a134be7d51a9e13cc986b'>;
+  StorageHashBase<'b97c53ea50b6163c7d31fc2c7a82b64a07a1d9381b996fd2ea8e9b36ceb12a9b'>;
 export type ExecutionHash =
   ExecutionHashBase<'1d1f02df6ab555a13e21640c0481691e19c96d5a1b43badae64c2b697014e588'>;
 export type ProfileHash =
@@ -375,6 +375,16 @@ export namespace Models {
     userId: FieldOutputTypes['public']['Kyc']['userId'];
     readonly [RelationKeys]?: never;
   };
+  export type public_Notification = {
+    body: FieldOutputTypes['public']['Notification']['body'];
+    createdAt: FieldOutputTypes['public']['Notification']['createdAt'];
+    id: FieldOutputTypes['public']['Notification']['id'];
+    read: FieldOutputTypes['public']['Notification']['read'];
+    title: FieldOutputTypes['public']['Notification']['title'];
+    type: FieldOutputTypes['public']['Notification']['type'];
+    userId: FieldOutputTypes['public']['Notification']['userId'];
+    readonly [RelationKeys]?: never;
+  };
   export type public_Payment = {
     amount: FieldOutputTypes['public']['Payment']['amount'];
     createdAt: FieldOutputTypes['public']['Payment']['createdAt'];
@@ -705,6 +715,7 @@ export declare const models: {
     ColorRound: Models.public_ColorRound;
     GameSetting: Models.public_GameSetting;
     Kyc: Models.public_Kyc;
+    Notification: Models.public_Notification;
     Payment: Models.public_Payment;
     PaymentGateway: Models.public_PaymentGateway;
     Payout: Models.public_Payout;
@@ -1478,6 +1489,72 @@ type ContractBase = Omit<
                   readonly name: 'Kyc_status_idx_e98638ab';
                   readonly prefix: 'Kyc_status_idx';
                   readonly columns: readonly ['status'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [];
+            };
+            readonly Notification: {
+              columns: {
+                readonly body: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly read: {
+                  readonly dataType: 'pg/bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', false>;
+                  };
+                  readonly many: false;
+                };
+                readonly title: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly type: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly userId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'Notification_userId_read_idx_76f3f2b6';
+                  readonly prefix: 'Notification_userId_read_idx';
+                  readonly columns: readonly ['userId', 'read'];
                   readonly unique: false;
                 },
               ];
@@ -3694,6 +3771,10 @@ type ContractBase = Omit<
       readonly model: 'GameSetting';
     };
     readonly Kyc: { readonly namespace: 'public' & NamespaceId; readonly model: 'Kyc' };
+    readonly Notification: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'Notification';
+    };
     readonly Payment: { readonly namespace: 'public' & NamespaceId; readonly model: 'Payment' };
     readonly PaymentGateway: {
       readonly namespace: 'public' & NamespaceId;
@@ -4311,6 +4392,55 @@ type ContractBase = Omit<
                 readonly selfieUrl: { readonly column: 'selfieUrl' };
                 readonly status: { readonly column: 'status' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly userId: { readonly column: 'userId' };
+              };
+            };
+          };
+          readonly Notification: {
+            readonly fields: {
+              readonly body: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly read: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
+              readonly title: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly type: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly userId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+            };
+            readonly relations: Record<string, never>;
+            readonly storage: {
+              readonly table: 'Notification';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly body: { readonly column: 'body' };
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly id: { readonly column: 'id' };
+                readonly read: { readonly column: 'read' };
+                readonly title: { readonly column: 'title' };
+                readonly type: { readonly column: 'type' };
                 readonly userId: { readonly column: 'userId' };
               };
             };

@@ -493,3 +493,16 @@ model Kyc {
 
   @@index([status])
 }
+
+/// In-app notification (deposit, withdrawal, bet result, KYC).
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt TimestamptzString @default(now())
+
+  @@index([userId, read])
+}

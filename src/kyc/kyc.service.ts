@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
+import { NOTIFICATION_TYPE, NotificationsService } from "../notifications/notifications.service.ts";
 import { PrismaService } from "../prisma/prisma.service.ts";
 import type { SubmitKycDto } from "./dto/kyc.dto.ts";
 import { isAdult } from "./kyc.rules.ts";
@@ -17,6 +18,7 @@ export class KycService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ConfigService) private readonly config: ConfigService,
+    @Inject(NotificationsService) private readonly notifications: NotificationsService,
   ) {}
 
   private get kyc() {
@@ -63,6 +65,12 @@ export class KycService {
       reviewedBy: reviewerId,
       reviewedAt: new Date().toISOString(),
     });
+    await this.notifications.notify(
+      row.userId,
+      NOTIFICATION_TYPE.KYC,
+      approve ? "Identity verified" : "Verification rejected",
+      approve ? "Your KYC was approved." : `Your KYC was rejected: ${reason ?? "see support"}`,
+    );
     return this.kyc.where({ id }).first();
   }
 

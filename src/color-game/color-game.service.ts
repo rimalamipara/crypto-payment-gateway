@@ -29,6 +29,7 @@ import {
   pickProfitMaximizingResult,
   type BetType,
 } from "./color-game.rules.ts";
+import { NOTIFICATION_TYPE, NotificationsService } from "../notifications/notifications.service.ts";
 import { ColorGameRepository } from "./color-game.repository.ts";
 import type { PlaceColorBetDto } from "./dto/color-game.dto.ts";
 
@@ -44,6 +45,7 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @Inject(ColorGameRepository) private readonly repo: ColorGameRepository,
     @Inject(WalletService) private readonly wallet: WalletService,
+    @Inject(NotificationsService) private readonly notifications: NotificationsService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -251,11 +253,23 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
             status: COLOR_BET_STATUS.WON,
             payoutUsd: normalizeUsd(payout),
           });
+          await this.notifications.notify(
+            bet.userId,
+            NOTIFICATION_TYPE.BET_RESULT,
+            "You won!",
+            `Period #${round.periodNo}: you won ${normalizeUsd(payout)} USD.`,
+          );
         } else {
           await this.repo.updateBet(bet.id, {
             status: COLOR_BET_STATUS.LOST,
             payoutUsd: "0",
           });
+          await this.notifications.notify(
+            bet.userId,
+            NOTIFICATION_TYPE.BET_RESULT,
+            "Bet lost",
+            `Period #${round.periodNo}: your ${normalizeUsd(bet.amountUsd)} USD bet lost.`,
+          );
         }
       }
 

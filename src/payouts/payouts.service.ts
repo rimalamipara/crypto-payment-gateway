@@ -11,6 +11,7 @@ import { DEFAULT_ROLES } from "../common/constants/roles.constants.ts";
 import type { AuthenticatedUser } from "../common/interfaces/authenticated-user.interface.ts";
 import { IntegrationLogsService } from "../integration-logs/integration-logs.service.ts";
 import { KycService } from "../kyc/kyc.service.ts";
+import { NOTIFICATION_TYPE, NotificationsService } from "../notifications/notifications.service.ts";
 import { OxaPayClient } from "../oxapay/oxapay.client.ts";
 import type { OxaPayWebhookPayload } from "../oxapay/oxapay.types.ts";
 import { WalletService } from "../wallet/wallet.service.ts";
@@ -32,6 +33,7 @@ export class PayoutsService {
     private readonly payoutsRepository: PayoutsRepository,
     @Inject(WalletService) private readonly walletService: WalletService,
     @Inject(KycService) private readonly kyc: KycService,
+    @Inject(NotificationsService) private readonly notifications: NotificationsService,
     @Inject(OxaPayClient) private readonly oxaPay: OxaPayClient,
     @Inject(ConfigService) private readonly config: ConfigService,
     @Inject(IntegrationLogsService)
@@ -188,6 +190,7 @@ export class PayoutsService {
       txHash: info.tx_hash ?? payout.txHash,
       fee: info.fee !== undefined ? String(info.fee) : payout.fee,
     });
+    await this.notifyPayoutStatus(payout, status);
 
     if (status === PAYOUT_STATUS.FAILED) {
       await this.walletService.refundFailedPayout({
@@ -256,6 +259,7 @@ export class PayoutsService {
       txHash: payload.tx_hash ?? payout.txHash,
       webhookPayload: JSON.stringify(payload),
     });
+    await this.notifyPayoutStatus(payout, status);
 
     if (status === PAYOUT_STATUS.FAILED) {
       await this.walletService.refundFailedPayout({
@@ -266,6 +270,24 @@ export class PayoutsService {
     }
 
     return "ok";
+  }
+
+  /** Notify once per transition into a final status (webhook retries don't repeat it). */
+  private async notifyPayoutStatus(
+    payout: { userId: number; amountUsd: string; status: string },
+    status: string,
+  ): Promise<void> {
+    if (status === payout.status) return;
+    if (status !== PAYOUT_STATUS.CONFIRMED && status !== PAYOUT_STATUS.FAILED) return;
+    const ok = status === PAYOUT_STATUS.CONFIRMED;
+    await this.notifications.notify(
+      payout.userId,
+      NOTIFICATION_TYPE.WITHDRAWAL,
+      ok ? "Withdrawal completed" : "Withdrawal failed",
+      ok
+        ? `Your withdrawal of ${payout.amountUsd} USD was sent.`
+        : `Your withdrawal of ${payout.amountUsd} USD failed and was refunded to your wallet.`,
+    );
   }
 
   private assertCanAccess(user: AuthenticatedUser, ownerId: number): void {

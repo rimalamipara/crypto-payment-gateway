@@ -12,6 +12,7 @@ import { randomBytes } from "node:crypto";
 import { DEFAULT_ROLES } from "../common/constants/roles.constants.ts";
 import type { AuthenticatedUser } from "../common/interfaces/authenticated-user.interface.ts";
 import { IntegrationLogsService } from "../integration-logs/integration-logs.service.ts";
+import { NOTIFICATION_TYPE, NotificationsService } from "../notifications/notifications.service.ts";
 import { OxaPayClient } from "../oxapay/oxapay.client.ts";
 import type { OxaPayWebhookPayload } from "../oxapay/oxapay.types.ts";
 import { WalletService } from "../wallet/wallet.service.ts";
@@ -34,6 +35,7 @@ export class PaymentsService {
     private readonly paymentsRepository: PaymentsRepository,
     @Inject(OxaPayClient) private readonly oxaPay: OxaPayClient,
     @Inject(WalletService) private readonly walletService: WalletService,
+    @Inject(NotificationsService) private readonly notifications: NotificationsService,
     @Inject(ConfigService) private readonly config: ConfigService,
     @Inject(IntegrationLogsService)
     private readonly integrationLogs: IntegrationLogsService,
@@ -256,6 +258,12 @@ export class PaymentsService {
 
     try {
       await this.walletService.creditFromTopupPayment(payment.id);
+      await this.notifications.notify(
+        payment.userId,
+        NOTIFICATION_TYPE.DEPOSIT,
+        "Deposit received",
+        `${payment.amount} ${payment.currency} was credited to your wallet.`,
+      );
     } catch (error) {
       this.logger.error(
         `Failed to credit wallet for payment ${payment.id}`,

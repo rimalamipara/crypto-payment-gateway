@@ -21,8 +21,11 @@ import {
   colorsForNumber,
   colorsToString,
   isValidSelection,
-  LOCK_MS,
-  ROUND_MS,
+  DEFAULT_DURATION_SEC,
+  isValidDuration,
+  lockMs,
+  roundMs,
+  ROUND_DURATIONS_SEC,
   pickProfitMaximizingResult,
   type BetType,
 } from "./color-game.rules.ts";
@@ -33,9 +36,10 @@ import type { PlaceColorBetDto } from "./dto/color-game.dto.ts";
 export class ColorGameService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ColorGameService.name);
   private tickTimer?: ReturnType<typeof setInterval>;
-  private settling = false;
-  /** Preset for the round after the current one (when current already locked). */
-  private queuedPreset: number | null = null;
+  /** Durations whose room is currently settling/cancelling. */
+  private readonly settling = new Set<number>();
+  /** Preset for the round after the current one (when current already locked), per room. */
+  private readonly queuedPreset = new Map<number, number>();
 
   constructor(
     @Inject(ColorGameRepository) private readonly repo: ColorGameRepository,
@@ -43,11 +47,13 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    await this.ensureOpenRound();
+    for (const d of ROUND_DURATIONS_SEC) await this.ensureOpenRound(d);
     this.tickTimer = setInterval(() => {
-      void this.tick().catch((err) =>
-        this.logger.warn(`color tick: ${String(err)}`),
-      );
+      for (const d of ROUND_DURATIONS_SEC) {
+        void this.tick(d).catch((err) =>
+          this.logger.warn(`color tick ${d}s: ${String(err)}`),
+        );
+      }
     }, 500);
   }
 
@@ -59,53 +65,70 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
     return new Date().toISOString();
   }
 
-  private async ensureOpenRound(): Promise<void> {
-    const open = await this.repo.findOpenRound();
+  /** Validate a room length from a request; undefined means the default 3 minutes. */
+  private duration(sec?: number): number {
+    const d = sec ?? DEFAULT_DURATION_SEC;
+    if (!isValidDuration(d)) {
+      throw new BadRequestException(
+        `durationSec must be one of ${ROUND_DURATIONS_SEC.join(", ")}`,
+      );
+    }
+    return d;
+  }
+
+  private async ensureOpenRound(durationSec: number): Promise<void> {
+    const open = await this.repo.findOpenRound(durationSec);
     if (!open) {
-      await this.startNextRound();
+      await this.startNextRound(durationSec);
       return;
     }
-    // Resync short leftover rounds (e.g. after duration config change) to full 3 minutes.
+    // Resync short leftover rounds (e.g. after duration config change) to the full length.
     const span =
       new Date(open.revealsAt).getTime() - new Date(open.startsAt).getTime();
     if (
-      span < ROUND_MS * 0.9 &&
+      span < roundMs(durationSec) * 0.9 &&
       (open.status === COLOR_ROUND_STATUS.BETTING ||
         open.status === COLOR_ROUND_STATUS.LOCKED)
     ) {
       const starts = Date.now();
       await this.repo.updateRound(open.id, {
         status: COLOR_ROUND_STATUS.BETTING,
-        betsCloseAt: new Date(starts + ROUND_MS - LOCK_MS).toISOString(),
-        revealsAt: new Date(starts + ROUND_MS).toISOString(),
+        betsCloseAt: new Date(
+          starts + roundMs(durationSec) - lockMs(durationSec),
+        ).toISOString(),
+        revealsAt: new Date(starts + roundMs(durationSec)).toISOString(),
       });
     }
   }
 
-  private async startNextRound(preset?: number | null): Promise<void> {
+  private async startNextRound(
+    durationSec: number,
+    preset?: number | null,
+  ): Promise<void> {
     const periodNo = (await this.repo.maxPeriodNo()) + 1;
     const starts = Date.now();
-    const revealsAt = starts + ROUND_MS;
-    const betsCloseAt = revealsAt - LOCK_MS;
+    const revealsAt = starts + roundMs(durationSec);
+    const betsCloseAt = revealsAt - lockMs(durationSec);
     const applied =
       preset !== undefined && preset !== null
         ? preset
-        : this.queuedPreset;
-    this.queuedPreset = null;
+        : (this.queuedPreset.get(durationSec) ?? null);
+    this.queuedPreset.delete(durationSec);
     await this.repo.createRound({
       periodNo,
       startsAt: new Date(starts).toISOString(),
       betsCloseAt: new Date(betsCloseAt).toISOString(),
       revealsAt: new Date(revealsAt).toISOString(),
+      durationSec,
       presetNumber: applied,
     });
   }
 
-  private async tick(): Promise<void> {
-    if (this.settling) return;
+  private async tick(durationSec: number): Promise<void> {
+    if (this.settling.has(durationSec)) return;
 
     // Resume payouts if a prior tick crashed after REVEALED but before SETTLED.
-    const stuck = await this.repo.findLatestRound();
+    const stuck = await this.repo.findLatestRound(durationSec);
     if (
       stuck &&
       stuck.status === COLOR_ROUND_STATUS.REVEALED &&
@@ -120,13 +143,13 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
         status: COLOR_ROUND_STATUS.SETTLED,
         settledAt: this.nowIso(),
       });
-      await this.startNextRound();
+      await this.startNextRound(durationSec);
       return;
     }
 
-    const round = await this.repo.findOpenRound();
+    const round = await this.repo.findOpenRound(durationSec);
     if (!round) {
-      await this.startNextRound();
+      await this.startNextRound(durationSec);
       return;
     }
 
@@ -180,11 +203,13 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
     forcedNumber: number | null,
     forcedByAdmin: boolean,
   ): Promise<void> {
-    if (this.settling) return;
-    this.settling = true;
+    const round0 = await this.repo.findRound(roundId);
+    if (!round0) return;
+    const durationSec = round0.durationSec;
+    if (this.settling.has(durationSec)) return;
+    this.settling.add(durationSec);
     try {
-      const round = await this.repo.findRound(roundId);
-      if (!round) return;
+      const round = round0;
       if (round.status === COLOR_ROUND_STATUS.SETTLED) {
         return;
       }
@@ -253,9 +278,9 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
         settledAt: this.nowIso(),
       });
 
-      await this.startNextRound();
+      await this.startNextRound(durationSec);
     } finally {
-      this.settling = false;
+      this.settling.delete(durationSec);
     }
   }
 
@@ -271,6 +296,7 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
     settledAt: string | null;
     presetNumber?: number | null;
     forcedByAdmin?: boolean;
+    durationSec: number;
   }, admin = false) {
     const now = Date.now();
     const showResult =
@@ -281,6 +307,7 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
       periodNo: round.periodNo,
       periodName: formatPeriodName(round.startsAt, round.periodNo),
       status: round.status,
+      durationSec: round.durationSec,
       resultNumber: showResult ? round.resultNumber : null,
       resultColors: showResult ? round.resultColors : null,
       startsAt: round.startsAt,
@@ -294,27 +321,29 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
         ? {
             presetNumber: round.presetNumber ?? null,
             forcedByAdmin: !!round.forcedByAdmin,
-            queuedNextPreset: this.queuedPreset,
+            queuedNextPreset: this.queuedPreset.get(round.durationSec) ?? null,
           }
         : {}),
     };
   }
 
-  async getCurrent() {
-    let round = await this.repo.findOpenRound();
+  async getCurrent(durationSec?: number) {
+    const d = this.duration(durationSec);
+    let round = await this.repo.findOpenRound(d);
     if (!round) {
-      await this.startNextRound();
-      round = await this.repo.findOpenRound();
+      await this.startNextRound(d);
+      round = await this.repo.findOpenRound(d);
     }
     if (!round) throw new NotFoundException("No active round");
     return this.toPublicRound(round);
   }
 
-  async getCurrentAdmin() {
-    let round = await this.repo.findOpenRound();
+  async getCurrentAdmin(durationSec?: number) {
+    const d = this.duration(durationSec);
+    let round = await this.repo.findOpenRound(d);
     if (!round) {
-      await this.startNextRound();
-      round = await this.repo.findOpenRound();
+      await this.startNextRound(d);
+      round = await this.repo.findOpenRound(d);
     }
     if (!round) throw new NotFoundException("No active round");
     const bets = await this.repo.listBetsForRound(round.id);
@@ -326,7 +355,7 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
       cur.amount += Number(b.amountUsd);
       tallies[key] = cur;
     }
-    const lastSettled = await this.repo.findLatestSettledRound();
+    const lastSettled = await this.repo.findLatestSettledRound(d);
     const now = Date.now();
     const revealAt = new Date(round.revealsAt).getTime();
     const openForAdmin =
@@ -390,13 +419,13 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
     if (!isValidSelection(dto.betType, dto.selection)) {
       throw new BadRequestException("Invalid selection");
     }
-    const round = await this.repo.findOpenRound();
+    const round = await this.repo.findOpenRound(this.duration(dto.durationSec));
     if (!round || round.status !== COLOR_ROUND_STATUS.BETTING) {
       throw new BadRequestException("Betting is closed for this round");
     }
     if (Date.now() >= new Date(round.betsCloseAt).getTime()) {
       throw new BadRequestException(
-        "Betting closed — last 30 seconds of the period are locked",
+        "Betting closed — the lock window at the end of the period has started",
       );
     }
 
@@ -459,9 +488,9 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  async recentRounds(limit = 10, page = 1) {
+  async recentRounds(limit = 10, page = 1, durationSec?: number) {
     const { items, total, page: p, limit: l } =
-      await this.repo.listRecentRounds(limit, page);
+      await this.repo.listRecentRounds(this.duration(durationSec), limit, page);
     return {
       items: items.map((r) => ({
         ...r,
@@ -478,11 +507,12 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
    * Queue winning number for the current round if still betting/locked,
    * otherwise queue for the next round.
    */
-  async adminPreset(number: number) {
+  async adminPreset(number: number, durationSec?: number) {
+    const d = this.duration(durationSec);
     if (!Number.isInteger(number) || number < 0 || number > 9) {
       throw new BadRequestException("number must be 0-9");
     }
-    const round = await this.repo.findOpenRound();
+    const round = await this.repo.findOpenRound(d);
     if (
       round &&
       (round.status === COLOR_ROUND_STATUS.BETTING ||
@@ -496,7 +526,7 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
         number,
       };
     }
-    this.queuedPreset = number;
+    this.queuedPreset.set(d, number);
     return { ok: true, appliedTo: "next", number };
   }
 
@@ -504,11 +534,11 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
    * Settle current round with the given number (admin override).
    * Prefer setting a preset — the tick auto-reveals when reveal time ends.
    */
-  async adminReveal(number: number) {
+  async adminReveal(number: number, durationSec?: number) {
     if (!Number.isInteger(number) || number < 0 || number > 9) {
       throw new BadRequestException("number must be 0-9");
     }
-    const round = await this.repo.findOpenRound();
+    const round = await this.repo.findOpenRound(this.duration(durationSec));
     if (!round) throw new BadRequestException("No open round");
     if (
       round.status !== COLOR_ROUND_STATUS.BETTING &&
@@ -521,16 +551,17 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** @deprecated Prefer adminReveal — kept for older clients. */
-  async adminForceReveal(number: number) {
-    return this.adminReveal(number);
+  async adminForceReveal(number: number, durationSec?: number) {
+    return this.adminReveal(number, durationSec);
   }
 
   /**
    * Cancel the draw after bets close (locked) and before auto-reveal:
    * refund pending bets, mark cancelled, start next period.
    */
-  async adminCancelDraw() {
-    const round = await this.repo.findOpenRound();
+  async adminCancelDraw(durationSec?: number) {
+    const d = this.duration(durationSec);
+    const round = await this.repo.findOpenRound(d);
     if (!round) throw new BadRequestException("No open round");
     const now = Date.now();
     if (now < new Date(round.betsCloseAt).getTime()) {
@@ -549,10 +580,10 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
     ) {
       throw new BadRequestException("Round cannot be cancelled");
     }
-    if (this.settling) {
+    if (this.settling.has(d)) {
       throw new BadRequestException("Round is already settling");
     }
-    this.settling = true;
+    this.settling.add(d);
     try {
       const pending = await this.repo.listPendingBets(round.id);
       for (const bet of pending) {
@@ -574,10 +605,10 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
         resultColors: null,
         forcedByAdmin: true,
       });
-      await this.startNextRound();
+      await this.startNextRound(d);
       return { ok: true, periodNo: round.periodNo, refunded: pending.length };
     } finally {
-      this.settling = false;
+      this.settling.delete(d);
     }
   }
 

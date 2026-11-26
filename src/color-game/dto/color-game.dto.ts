@@ -4,10 +4,18 @@ import {
   IsIn,
   IsInt,
   IsNumber,
+  IsOptional,
   IsString,
   Max,
   Min,
 } from "class-validator";
+
+import { ROUND_DURATIONS_SEC } from "../color-game.rules.ts";
+
+const durationApi = {
+  enum: [...ROUND_DURATIONS_SEC],
+  description: "Session length in seconds (default 180)",
+};
 
 export class PlaceColorBetDto {
   @ApiProperty({ enum: ["color", "number"] })
@@ -32,6 +40,11 @@ export class PlaceColorBetDto {
   @IsNumber({ maxDecimalPlaces: 8 })
   @Min(0.01)
   amountUsd!: number;
+
+  @ApiPropertyOptional(durationApi)
+  @IsOptional()
+  @IsIn([...ROUND_DURATIONS_SEC])
+  durationSec?: number;
 }
 
 export class ColorNumberDto {
@@ -40,6 +53,11 @@ export class ColorNumberDto {
   @Min(0)
   @Max(9)
   number!: number;
+
+  @ApiPropertyOptional(durationApi)
+  @IsOptional()
+  @IsIn([...ROUND_DURATIONS_SEC])
+  durationSec?: number;
 }
 
 export class ColorRoundPublicDto {
@@ -51,6 +69,9 @@ export class ColorRoundPublicDto {
 
   @ApiProperty()
   status!: string;
+
+  @ApiProperty(durationApi)
+  durationSec!: number;
 
   @ApiPropertyOptional({ nullable: true })
   resultNumber!: number | null;

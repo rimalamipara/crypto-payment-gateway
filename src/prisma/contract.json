@@ -681,6 +681,13 @@
                   "kind": "scalar"
                 }
               },
+              "durationSec": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "forcedByAdmin": {
                 "nullable": false,
                 "type": {
@@ -783,6 +790,9 @@
                 },
                 "createdAt": {
                   "column": "createdAt"
+                },
+                "durationSec": {
+                  "column": "durationSec"
                 },
                 "forcedByAdmin": {
                   "column": "forcedByAdmin"
@@ -4182,6 +4192,15 @@
                   },
                   "nullable": false
                 },
+                "durationSec": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 180
+                  },
+                  "nullable": false
+                },
                 "forcedByAdmin": {
                   "codecId": "pg/bool@1",
                   "dataType": "pg/bool",
@@ -6709,7 +6728,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "83a1ad5965352bf8456d472d0ed88453047a80fe462856a8eb151446c2a313d5"
+    "storageHash": "a25f3bf14180cfdb89dde06268ba4567c8bd08849cab9b6b3ec6e3ffeb6b4b4c"
   },
   "execution": {
     "executionHash": "6d64aa872ecb834619a31a9b7ac51bc59869aca790d515b4c86a621f7a12132e",

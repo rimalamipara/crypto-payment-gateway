@@ -296,6 +296,7 @@ model ColorRound {
   settledAt     TimestamptzString?
   forcedByAdmin Boolean  @default(false)
   presetNumber  Int?
+  durationSec   Int      @default(180)
   bets          ColorBet[]
   createdAt     TimestamptzString @default(now())
   updatedAt     temporal.updatedAtString()

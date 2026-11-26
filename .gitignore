@@ -11,3 +11,6 @@ dist/
 
 package-lock.json
 .neon
+
+DEPLOYMENT.md
+.playwright-mcp/

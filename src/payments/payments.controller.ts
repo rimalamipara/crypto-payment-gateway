@@ -32,6 +32,7 @@ import type { AuthenticatedUser } from "../common/interfaces/authenticated-user.
 import { parseLimit, parsePage } from "../common/pagination.ts";
 import { CreatePaymentDto } from "./dto/create-payment.dto.ts";
 import { PaymentResponseDto } from "./dto/payment-response.dto.ts";
+import { PaymentGatewaysService } from "./payment-gateways.service.ts";
 import { PaymentsService } from "./payments.service.ts";
 
 @ApiTags("payments")
@@ -39,6 +40,8 @@ import { PaymentsService } from "./payments.service.ts";
 export class PaymentsController {
   constructor(
     @Inject(PaymentsService) private readonly paymentsService: PaymentsService,
+    @Inject(PaymentGatewaysService)
+    private readonly gateways: PaymentGatewaysService,
   ) {}
 
   @Post()
@@ -50,6 +53,15 @@ export class PaymentsController {
     @Body() dto: CreatePaymentDto,
   ) {
     return this.paymentsService.createInvoice(user, dto);
+  }
+
+  @Get("availability")
+  @ApiBearerAuth("access-token")
+  @ApiOperation({
+    summary: "Whether deposits and withdrawals are currently available",
+  })
+  availability() {
+    return this.gateways.availability();
   }
 
   @Get()

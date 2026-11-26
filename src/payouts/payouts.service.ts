@@ -42,7 +42,10 @@ export class PayoutsService {
     user: AuthenticatedUser,
     dto: CreatePayoutDto,
   ): Promise<PayoutResponseDto> {
-    if (!(await this.gateways.isEnabled("withdrawals"))) {
+    if (
+      !(await this.gateways.isEnabled("withdrawals")) ||
+      !(await this.gateways.isEnabled("oxapay-withdrawals"))
+    ) {
       throw new ServiceUnavailableException("Withdrawals are temporarily disabled");
     }
     const currency = dto.currency.trim().toUpperCase();

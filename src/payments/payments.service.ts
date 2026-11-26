@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { randomBytes } from "node:crypto";
@@ -21,6 +22,7 @@ import {
 } from "./constants/payment-status.ts";
 import type { CreatePaymentDto } from "./dto/create-payment.dto.ts";
 import type { PaymentResponseDto } from "./dto/payment-response.dto.ts";
+import { PaymentGatewaysService } from "./payment-gateways.service.ts";
 import { PaymentsRepository } from "./payments.repository.ts";
 
 @Injectable()
@@ -35,12 +37,17 @@ export class PaymentsService {
     @Inject(ConfigService) private readonly config: ConfigService,
     @Inject(IntegrationLogsService)
     private readonly integrationLogs: IntegrationLogsService,
+    @Inject(PaymentGatewaysService)
+    private readonly gateways: PaymentGatewaysService,
   ) {}
 
   async createInvoice(
     user: AuthenticatedUser,
     dto: CreatePaymentDto,
   ): Promise<PaymentResponseDto> {
+    if (!(await this.gateways.isEnabled("oxapay"))) {
+      throw new ServiceUnavailableException("Deposits are temporarily disabled");
+    }
     const currency = "USD";
     const orderId = this.buildOrderId(user.id);
     const callbackUrl = this.resolveCallbackUrl();

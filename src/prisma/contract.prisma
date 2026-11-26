@@ -456,3 +456,12 @@ model GameSetting {
   createdAt TimestamptzString @default(now())
   updatedAt temporal.updatedAtString()
 }
+
+/// Admin on/off switch per payment gateway ("oxapay"). Missing row = enabled.
+model PaymentGateway {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  enabled   Boolean  @default(true)
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}

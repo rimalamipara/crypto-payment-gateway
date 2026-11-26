@@ -28,6 +28,10 @@
       "model": "Payment",
       "namespace": "public"
     },
+    "PaymentGateway": {
+      "model": "PaymentGateway",
+      "namespace": "public"
+    },
     "Payout": {
       "model": "Payout",
       "namespace": "public"
@@ -1129,6 +1133,67 @@
               },
               "namespaceId": "public",
               "table": "Payment"
+            }
+          },
+          "PaymentGateway": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "enabled": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "enabled": {
+                  "column": "enabled"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "name": {
+                  "column": "name"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "PaymentGateway"
             }
           },
           "Payout": {
@@ -4546,6 +4611,61 @@
                 }
               ]
             },
+            "PaymentGateway": {
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "enabled": {
+                  "codecId": "pg/bool@1",
+                  "dataType": "pg/bool",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "name"
+                  ]
+                }
+              ]
+            },
             "Payout": {
               "columns": {
                 "address": {
@@ -6728,10 +6848,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "a25f3bf14180cfdb89dde06268ba4567c8bd08849cab9b6b3ec6e3ffeb6b4b4c"
+    "storageHash": "8d953028106a9babffe27c0d06c1b6231252d5709c75c36a2ce88ddd6c28b1a0"
   },
   "execution": {
-    "executionHash": "6d64aa872ecb834619a31a9b7ac51bc59869aca790d515b4c86a621f7a12132e",
+    "executionHash": "8077e156b6509947ceb4ba3e484a8930ec046b98e2db44c229113c1bd5dff8c2",
     "mutations": {
       "defaults": [
         {
@@ -6790,6 +6910,21 @@
           },
           "ref": {
             "entry": "Payment",
+            "field": "updatedAt",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestamptzStringNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestamptzStringNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "PaymentGateway",
             "field": "updatedAt",
             "namespace": "public"
           }

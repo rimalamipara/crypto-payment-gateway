@@ -1,5 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 
+import { CacheService } from "../cache/cache.service.ts";
 import { PAYMENT_STATUS } from "../payments/constants/payment-status.ts";
 import { PAYOUT_STATUS } from "../payouts/constants/payout-status.ts";
 import { PrismaService } from "../prisma/prisma.service.ts";
@@ -8,9 +9,17 @@ import type { AdminStatsDto } from "./dto/admin-stats.dto.ts";
 
 @Injectable()
 export class AdminStatsService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService,
+  ) {}
 
-  async getOverview(): Promise<AdminStatsDto> {
+  /** Heavy aggregates over every payment/payout/wallet; 15s staleness is fine for a dashboard. */
+  getOverview(): Promise<AdminStatsDto> {
+    return this.cache.getOrSet("admin:stats", 15, () => this.computeOverview());
+  }
+
+  private async computeOverview(): Promise<AdminStatsDto> {
     const db = this.prisma.client.orm.public;
 
     const [

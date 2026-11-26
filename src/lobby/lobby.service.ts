@@ -1,5 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 
+import { CacheService } from "../cache/cache.service.ts";
 import { ColorGameService } from "../color-game/color-game.service.ts";
 import { GameSettingsService } from "../game-settings/game-settings.service.ts";
 import { PokerService } from "../poker/poker.service.ts";
@@ -30,14 +31,16 @@ export class LobbyService {
     @Inject(RummyService) private readonly rummy: RummyService,
     @Inject(ColorGameService) private readonly colorGame: ColorGameService,
     @Inject(GameSettingsService) private readonly gameSettings: GameSettingsService,
+    @Inject(CacheService) private readonly cache: CacheService,
   ) {}
 
   async overview(userId: number) {
     const [pokerTables, tpTables, rummyTables, color, pokerStats, enabled] =
       await Promise.all([
-        this.poker.listTablesForUser(),
-        this.teenPatti.listTablesForUser(),
-        this.rummy.listTablesForUser(),
+        // Shared (not per-user) table lists; 2s stale seat counts are fine for the lobby.
+        this.cache.getOrSet("lobby:poker", 2, () => this.poker.listTablesForUser()),
+        this.cache.getOrSet("lobby:tp", 2, () => this.teenPatti.listTablesForUser()),
+        this.cache.getOrSet("lobby:rummy", 2, () => this.rummy.listTablesForUser()),
         this.colorGame.getCurrent(),
         this.poker.myStats(userId),
         this.gameSettings.enabledMap(),

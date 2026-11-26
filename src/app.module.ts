@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 
 import { AdminModule } from "./admin/admin.module.ts";
 import { AppController } from "./app.controller.ts";
+import { CacheModule } from "./cache/cache.module.ts";
 import { AuthModule } from "./auth/auth.module.ts";
 import { ColorGameModule } from "./color-game/color-game.module.ts";
 import { configuration } from "./config/index.ts";
@@ -32,6 +33,7 @@ import { WalletModule } from "./wallet/wallet.module.ts";
       load: [configuration],
     }),
     PrismaModule,
+    CacheModule,
     IntegrationLogsModule,
     OxaPayModule,
     AuthModule,

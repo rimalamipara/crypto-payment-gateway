@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'a25f3bf14180cfdb89dde06268ba4567c8bd08849cab9b6b3ec6e3ffeb6b4b4c'>;
+  StorageHashBase<'8d953028106a9babffe27c0d06c1b6231252d5709c75c36a2ce88ddd6c28b1a0'>;
 export type ExecutionHash =
-  ExecutionHashBase<'6d64aa872ecb834619a31a9b7ac51bc59869aca790d515b4c86a621f7a12132e'>;
+  ExecutionHashBase<'8077e156b6509947ceb4ba3e484a8930ec046b98e2db44c229113c1bd5dff8c2'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -381,6 +381,14 @@ export namespace Models {
     user: public_User;
     readonly [RelationKeys]?: 'user';
   };
+  export type public_PaymentGateway = {
+    createdAt: FieldOutputTypes['public']['PaymentGateway']['createdAt'];
+    enabled: FieldOutputTypes['public']['PaymentGateway']['enabled'];
+    id: FieldOutputTypes['public']['PaymentGateway']['id'];
+    name: FieldOutputTypes['public']['PaymentGateway']['name'];
+    updatedAt: FieldOutputTypes['public']['PaymentGateway']['updatedAt'];
+    readonly [RelationKeys]?: never;
+  };
   export type public_Payout = {
     address: FieldOutputTypes['public']['Payout']['address'];
     amountUsd: FieldOutputTypes['public']['Payout']['amountUsd'];
@@ -672,6 +680,7 @@ export declare const models: {
     ColorRound: Models.public_ColorRound;
     GameSetting: Models.public_GameSetting;
     Payment: Models.public_Payment;
+    PaymentGateway: Models.public_PaymentGateway;
     Payout: Models.public_Payout;
     PokerAction: Models.public_PokerAction;
     PokerHand: Models.public_PokerHand;
@@ -1511,6 +1520,53 @@ type ContractBase = Omit<
                   };
                 },
               ];
+            };
+            readonly PaymentGateway: {
+              columns: {
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly many: false;
+                };
+                readonly enabled: {
+                  readonly dataType: 'pg/bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', true>;
+                  };
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly name: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly updatedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['name'] }];
+              indexes: readonly [];
+              foreignKeys: readonly [];
             };
             readonly Payout: {
               columns: {
@@ -3448,6 +3504,10 @@ type ContractBase = Omit<
       readonly model: 'GameSetting';
     };
     readonly Payment: { readonly namespace: 'public' & NamespaceId; readonly model: 'Payment' };
+    readonly PaymentGateway: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'PaymentGateway';
+    };
     readonly Payout: { readonly namespace: 'public' & NamespaceId; readonly model: 'Payout' };
     readonly PokerAction: {
       readonly namespace: 'public' & NamespaceId;
@@ -4099,6 +4159,48 @@ type ContractBase = Omit<
                 readonly userId: { readonly column: 'userId' };
                 readonly walletCredited: { readonly column: 'walletCredited' };
                 readonly webhookPayload: { readonly column: 'webhookPayload' };
+              };
+            };
+          };
+          readonly PaymentGateway: {
+            readonly fields: {
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly enabled: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly name: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+            };
+            readonly relations: Record<string, never>;
+            readonly storage: {
+              readonly table: 'PaymentGateway';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly enabled: { readonly column: 'enabled' };
+                readonly id: { readonly column: 'id' };
+                readonly name: { readonly column: 'name' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
               };
             };
           };
@@ -5788,6 +5890,15 @@ type ContractBase = Omit<
           readonly onUpdate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Payment';
+            readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'PaymentGateway';
             readonly field: 'updatedAt';
             readonly namespace: 'public';
           };

@@ -47,7 +47,7 @@ export class PaymentsService {
   ): Promise<PaymentResponseDto> {
     if (
       !(await this.gateways.isEnabled("deposits")) ||
-      !(await this.gateways.isEnabled("oxapay"))
+      !(await this.gateways.isEnabled("oxapay-deposits"))
     ) {
       throw new ServiceUnavailableException("Deposits are temporarily disabled");
     }

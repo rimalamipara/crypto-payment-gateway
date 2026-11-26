@@ -2,8 +2,13 @@ import { Inject, Injectable } from "@nestjs/common";
 
 import { PrismaService } from "../prisma/prisma.service.ts";
 
-/** "deposits" and "withdrawals" are platform-wide switches; the rest are gateways. */
-export const PAYMENT_GATEWAYS = ["deposits", "withdrawals", "oxapay"] as const;
+/** "deposits" / "withdrawals" are platform-wide; "oxapay-*" switch one gateway's deposits / withdrawals. */
+export const PAYMENT_GATEWAYS = [
+  "deposits",
+  "withdrawals",
+  "oxapay-deposits",
+  "oxapay-withdrawals",
+] as const;
 export type PaymentGatewayName = (typeof PAYMENT_GATEWAYS)[number];
 
 export function isGatewayName(v: string): v is PaymentGatewayName {
@@ -22,6 +27,14 @@ export class PaymentGatewaysService {
   async isEnabled(name: PaymentGatewayName): Promise<boolean> {
     const row = await this.orm.PaymentGateway.where({ name }).first();
     return row?.enabled ?? true;
+  }
+
+  /** What players may do right now: platform switch AND gateway switch. */
+  async availability() {
+    const [d, w, gd, gw] = await Promise.all(
+      PAYMENT_GATEWAYS.map((n) => this.isEnabled(n)),
+    );
+    return { deposits: d && gd, withdrawals: w && gw };
   }
 
   async list() {

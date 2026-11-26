@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
@@ -20,6 +21,7 @@ import {
 import type { CreatePayoutDto } from "./dto/create-payout.dto.ts";
 import type { PayoutAssetDto } from "./dto/payout-asset.dto.ts";
 import type { PayoutResponseDto } from "./dto/payout-response.dto.ts";
+import { PaymentGatewaysService } from "../payments/payment-gateways.service.ts";
 import { PayoutsRepository } from "./payouts.repository.ts";
 
 @Injectable()
@@ -32,12 +34,17 @@ export class PayoutsService {
     @Inject(ConfigService) private readonly config: ConfigService,
     @Inject(IntegrationLogsService)
     private readonly integrationLogs: IntegrationLogsService,
+    @Inject(PaymentGatewaysService)
+    private readonly gateways: PaymentGatewaysService,
   ) {}
 
   async create(
     user: AuthenticatedUser,
     dto: CreatePayoutDto,
   ): Promise<PayoutResponseDto> {
+    if (!(await this.gateways.isEnabled("withdrawals"))) {
+      throw new ServiceUnavailableException("Withdrawals are temporarily disabled");
+    }
     const currency = dto.currency.trim().toUpperCase();
     const network = dto.network.trim();
     const amountUsd = normalizeUsd(dto.amountUsd);

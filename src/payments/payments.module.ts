@@ -11,6 +11,6 @@ import { PaymentsService } from "./payments.service.ts";
   imports: [WalletModule],
   controllers: [PaymentsController, PaymentGatewaysAdminController],
   providers: [PaymentsService, PaymentsRepository, PaymentGatewaysService],
-  exports: [PaymentsService],
+  exports: [PaymentsService, PaymentGatewaysService],
 })
 export class PaymentsModule {}

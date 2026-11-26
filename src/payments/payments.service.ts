@@ -45,7 +45,10 @@ export class PaymentsService {
     user: AuthenticatedUser,
     dto: CreatePaymentDto,
   ): Promise<PaymentResponseDto> {
-    if (!(await this.gateways.isEnabled("oxapay"))) {
+    if (
+      !(await this.gateways.isEnabled("deposits")) ||
+      !(await this.gateways.isEnabled("oxapay"))
+    ) {
       throw new ServiceUnavailableException("Deposits are temporarily disabled");
     }
     const currency = "USD";

@@ -2,14 +2,15 @@ import { Inject, Injectable } from "@nestjs/common";
 
 import { PrismaService } from "../prisma/prisma.service.ts";
 
-export const PAYMENT_GATEWAYS = ["oxapay"] as const;
+/** "deposits" and "withdrawals" are platform-wide switches; the rest are gateways. */
+export const PAYMENT_GATEWAYS = ["deposits", "withdrawals", "oxapay"] as const;
 export type PaymentGatewayName = (typeof PAYMENT_GATEWAYS)[number];
 
 export function isGatewayName(v: string): v is PaymentGatewayName {
   return (PAYMENT_GATEWAYS as readonly string[]).includes(v);
 }
 
-/** Admin on/off switch per payment gateway. A gateway with no stored row is enabled. */
+/** Admin on/off switches for payment gateways and platform deposits/withdrawals. A gateway with no stored row is enabled. */
 @Injectable()
 export class PaymentGatewaysService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}

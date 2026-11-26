@@ -6,8 +6,10 @@ model User {
   username     String?
   name         String?
   passwordHash String
+  phone        String?  @unique
+  googleId     String?  @unique
   isActive     Boolean  @default(true)
-  posts        Post[]
+  posts       Post[]
   userRoles    UserRole[]
   payments       Payment[]
   wallet         Wallet?

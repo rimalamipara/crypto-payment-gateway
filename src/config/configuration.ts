@@ -9,6 +9,9 @@ export default () => ({
     secret: process.env.JWT_SECRET ?? "",
     expiresIn: process.env.JWT_EXPIRES_IN ?? "1d",
   },
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+  },
   admin: {
     email: process.env.ADMIN_EMAIL ?? "",
     password: process.env.ADMIN_PASSWORD ?? "",

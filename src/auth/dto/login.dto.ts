@@ -1,10 +1,22 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsString, MinLength } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsEmail, IsOptional, IsString, Matches, MinLength } from "class-validator";
+
+import { PHONE_REGEX } from "./register.dto.ts";
 
 export class LoginDto {
-  @ApiProperty({ type: String, example: "alice@example.com" })
+  @ApiPropertyOptional({ type: String, example: "alice@example.com" })
+  @IsOptional()
   @IsEmail()
-  email!: string;
+  email?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    example: "+919876543210",
+    description: "E.164; use instead of email",
+  })
+  @IsOptional()
+  @Matches(PHONE_REGEX)
+  phone?: string;
 
   @ApiProperty({ type: String, example: "password123", minLength: 8 })
   @IsString()

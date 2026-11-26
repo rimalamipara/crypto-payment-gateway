@@ -3,9 +3,12 @@ import {
   IsEmail,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
 } from "class-validator";
+
+export const PHONE_REGEX = /^\+[1-9]\d{7,14}$/;
 
 export class RegisterDto {
   @ApiProperty({ type: String, example: "alice@example.com" })
@@ -29,4 +32,9 @@ export class RegisterDto {
   @IsString()
   @MaxLength(120)
   name?: string;
+
+  @ApiPropertyOptional({ type: String, example: "+919876543210", description: "E.164" })
+  @IsOptional()
+  @Matches(PHONE_REGEX)
+  phone?: string;
 }

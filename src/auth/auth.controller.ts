@@ -24,6 +24,7 @@ import {
   AuthTokensResponseDto,
   AuthUserDto,
 } from "./dto/auth-response.dto.ts";
+import { GoogleLoginDto } from "./dto/google-login.dto.ts";
 import { LoginDto } from "./dto/login.dto.ts";
 import { RegisterDto } from "./dto/register.dto.ts";
 
@@ -48,6 +49,15 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: "Invalid credentials" })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Public()
+  @Post("google")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Login/register with a Google ID token" })
+  @ApiOkResponse({ type: () => AuthTokensResponseDto })
+  google(@Body() dto: GoogleLoginDto) {
+    return this.authService.loginWithGoogle(dto.idToken);
   }
 
   @Get("me")

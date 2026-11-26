@@ -3025,6 +3025,13 @@
                   "kind": "scalar"
                 }
               },
+              "googleId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -3048,6 +3055,13 @@
               },
               "passwordHash": {
                 "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "phone": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -3244,6 +3258,9 @@
                 "email": {
                   "column": "email"
                 },
+                "googleId": {
+                  "column": "googleId"
+                },
                 "id": {
                   "column": "id"
                 },
@@ -3255,6 +3272,9 @@
                 },
                 "passwordHash": {
                   "column": "passwordHash"
+                },
+                "phone": {
+                  "column": "phone"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -6328,6 +6348,11 @@
                   "dataType": "pg/text",
                   "nullable": false
                 },
+                "googleId": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "id": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
@@ -6356,6 +6381,11 @@
                   "dataType": "pg/text",
                   "nullable": false
                 },
+                "phone": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "dataType": "pg/timestamptz",
@@ -6378,6 +6408,16 @@
                 {
                   "columns": [
                     "email"
+                  ]
+                },
+                {
+                  "columns": [
+                    "phone"
+                  ]
+                },
+                {
+                  "columns": [
+                    "googleId"
                   ]
                 }
               ]
@@ -6848,7 +6888,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "8d953028106a9babffe27c0d06c1b6231252d5709c75c36a2ce88ddd6c28b1a0"
+    "storageHash": "6a28034f9bba726e4fab923a07b031e3656f7e8acf58f83c578ac7455f53fc95"
   },
   "execution": {
     "executionHash": "8077e156b6509947ceb4ba3e484a8930ec046b98e2db44c229113c1bd5dff8c2",

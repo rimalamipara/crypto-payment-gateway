@@ -32,6 +32,7 @@ import {
   TP_TABLE_STATUS,
   TP_TURN_TIMEOUT_MS,
 } from "./teen-patti.constants.ts";
+import { ResponsibleGamblingService } from "../responsible-gambling/rg.service.ts";
 import { TeenPattiRepository } from "./teen-patti.repository.ts";
 import { GameSettingsService } from "../game-settings/game-settings.service.ts";
 
@@ -60,6 +61,7 @@ export class TeenPattiService extends EventEmitter implements OnModuleInit {
   constructor(
     @Inject(TeenPattiRepository) private readonly repo: TeenPattiRepository,
     @Inject(WalletService) private readonly wallet: WalletService,
+    @Inject(ResponsibleGamblingService) private readonly rg: ResponsibleGamblingService,
     /** Optional so services can still be built by hand (tests); Nest always injects it. */
     @Optional()
     @Inject(GameSettingsService)
@@ -165,6 +167,7 @@ export class TeenPattiService extends EventEmitter implements OnModuleInit {
   }
 
   async buyIn(userId: number, tableId: number, dto: TpBuyInDto) {
+    await this.rg.assertCanPlay(userId);
     const table = await this.repo.findTable(tableId);
     if (!table) throw new NotFoundException("Table not found");
     if (table.status !== TP_TABLE_STATUS.OPEN) {

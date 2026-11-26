@@ -30,6 +30,7 @@ import {
   type BetType,
 } from "./color-game.rules.ts";
 import { NOTIFICATION_TYPE, NotificationsService } from "../notifications/notifications.service.ts";
+import { ResponsibleGamblingService } from "../responsible-gambling/rg.service.ts";
 import { ColorGameRepository } from "./color-game.repository.ts";
 import type { PlaceColorBetDto } from "./dto/color-game.dto.ts";
 
@@ -45,6 +46,7 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @Inject(ColorGameRepository) private readonly repo: ColorGameRepository,
     @Inject(WalletService) private readonly wallet: WalletService,
+    @Inject(ResponsibleGamblingService) private readonly rg: ResponsibleGamblingService,
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
   ) {}
 
@@ -430,6 +432,7 @@ export class ColorGameService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async placeBetUnlocked(userId: number, dto: PlaceColorBetDto) {
+    await this.rg.assertCanPlay(userId);
     if (!isValidSelection(dto.betType, dto.selection)) {
       throw new BadRequestException("Invalid selection");
     }

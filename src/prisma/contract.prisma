@@ -506,3 +506,15 @@ model Notification {
 
   @@index([userId, read])
 }
+
+/// Per-user responsible-gambling limits and breaks.
+model ResponsibleGambling {
+  id                   Int      @id @default(autoincrement())
+  userId               Int      @unique
+  dailyDepositLimitUsd Decimal?
+  dailyLossLimitUsd    Decimal?
+  coolingOffUntil      TimestamptzString?
+  selfExcludedUntil    TimestamptzString?
+  createdAt            TimestamptzString @default(now())
+  updatedAt            temporal.updatedAtString()
+}

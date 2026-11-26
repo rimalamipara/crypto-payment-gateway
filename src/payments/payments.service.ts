@@ -13,6 +13,7 @@ import { DEFAULT_ROLES } from "../common/constants/roles.constants.ts";
 import type { AuthenticatedUser } from "../common/interfaces/authenticated-user.interface.ts";
 import { IntegrationLogsService } from "../integration-logs/integration-logs.service.ts";
 import { NOTIFICATION_TYPE, NotificationsService } from "../notifications/notifications.service.ts";
+import { ResponsibleGamblingService } from "../responsible-gambling/rg.service.ts";
 import { OxaPayClient } from "../oxapay/oxapay.client.ts";
 import type { OxaPayWebhookPayload } from "../oxapay/oxapay.types.ts";
 import { WalletService } from "../wallet/wallet.service.ts";
@@ -35,6 +36,7 @@ export class PaymentsService {
     private readonly paymentsRepository: PaymentsRepository,
     @Inject(OxaPayClient) private readonly oxaPay: OxaPayClient,
     @Inject(WalletService) private readonly walletService: WalletService,
+    @Inject(ResponsibleGamblingService) private readonly rg: ResponsibleGamblingService,
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
     @Inject(ConfigService) private readonly config: ConfigService,
     @Inject(IntegrationLogsService)
@@ -53,6 +55,7 @@ export class PaymentsService {
     ) {
       throw new ServiceUnavailableException("Deposits are temporarily disabled");
     }
+    await this.rg.assertCanDeposit(user.id, Number(normalizeUsd(dto.amount)));
     const currency = "USD";
     const orderId = this.buildOrderId(user.id);
     const callbackUrl = this.resolveCallbackUrl();

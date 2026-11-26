@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'b97c53ea50b6163c7d31fc2c7a82b64a07a1d9381b996fd2ea8e9b36ceb12a9b'>;
+  StorageHashBase<'53ef5517d068a9f7cbdd6685c559b7c863febd39b5a5c1d6622e99ce19467087'>;
 export type ExecutionHash =
-  ExecutionHashBase<'1d1f02df6ab555a13e21640c0481691e19c96d5a1b43badae64c2b697014e588'>;
+  ExecutionHashBase<'2414f868b9be38fddaf37cbc3a0a306d01fde16355f3c967936a183f84b247e0'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -522,6 +522,17 @@ export namespace Models {
     author: public_User;
     readonly [RelationKeys]?: 'author';
   };
+  export type public_ResponsibleGambling = {
+    coolingOffUntil: FieldOutputTypes['public']['ResponsibleGambling']['coolingOffUntil'];
+    createdAt: FieldOutputTypes['public']['ResponsibleGambling']['createdAt'];
+    dailyDepositLimitUsd: FieldOutputTypes['public']['ResponsibleGambling']['dailyDepositLimitUsd'];
+    dailyLossLimitUsd: FieldOutputTypes['public']['ResponsibleGambling']['dailyLossLimitUsd'];
+    id: FieldOutputTypes['public']['ResponsibleGambling']['id'];
+    selfExcludedUntil: FieldOutputTypes['public']['ResponsibleGambling']['selfExcludedUntil'];
+    updatedAt: FieldOutputTypes['public']['ResponsibleGambling']['updatedAt'];
+    userId: FieldOutputTypes['public']['ResponsibleGambling']['userId'];
+    readonly [RelationKeys]?: never;
+  };
   export type public_Role = {
     createdAt: FieldOutputTypes['public']['Role']['createdAt'];
     description: FieldOutputTypes['public']['Role']['description'];
@@ -725,6 +736,7 @@ export declare const models: {
     PokerSeat: Models.public_PokerSeat;
     PokerTable: Models.public_PokerTable;
     Post: Models.public_Post;
+    ResponsibleGambling: Models.public_ResponsibleGambling;
     Role: Models.public_Role;
     RummyHand: Models.public_RummyHand;
     RummySeat: Models.public_RummySeat;
@@ -2566,6 +2578,67 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly ResponsibleGambling: {
+              columns: {
+                readonly coolingOffUntil: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly many: false;
+                };
+                readonly dailyDepositLimitUsd: {
+                  readonly dataType: 'pg/numeric';
+                  readonly codecId: 'pg/numeric@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly dailyLossLimitUsd: {
+                  readonly dataType: 'pg/numeric';
+                  readonly codecId: 'pg/numeric@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly selfExcludedUntil: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly updatedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly userId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['userId'] }];
+              indexes: readonly [];
+              foreignKeys: readonly [];
+            };
             readonly Role: {
               columns: {
                 readonly createdAt: {
@@ -3796,6 +3869,10 @@ type ContractBase = Omit<
       readonly model: 'PokerTable';
     };
     readonly Post: { readonly namespace: 'public' & NamespaceId; readonly model: 'Post' };
+    readonly ResponsibleGambling: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'ResponsibleGambling';
+    };
     readonly Role: { readonly namespace: 'public' & NamespaceId; readonly model: 'Role' };
     readonly RummyHand: { readonly namespace: 'public' & NamespaceId; readonly model: 'RummyHand' };
     readonly RummySeat: { readonly namespace: 'public' & NamespaceId; readonly model: 'RummySeat' };
@@ -5232,6 +5309,69 @@ type ContractBase = Omit<
               };
             };
           };
+          readonly ResponsibleGambling: {
+            readonly fields: {
+              readonly coolingOffUntil: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly dailyDepositLimitUsd: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/numeric@1' };
+              };
+              readonly dailyLossLimitUsd: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/numeric@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly selfExcludedUntil: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly userId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+            };
+            readonly relations: Record<string, never>;
+            readonly storage: {
+              readonly table: 'ResponsibleGambling';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly coolingOffUntil: { readonly column: 'coolingOffUntil' };
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly dailyDepositLimitUsd: { readonly column: 'dailyDepositLimitUsd' };
+                readonly dailyLossLimitUsd: { readonly column: 'dailyLossLimitUsd' };
+                readonly id: { readonly column: 'id' };
+                readonly selfExcludedUntil: { readonly column: 'selfExcludedUntil' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly userId: { readonly column: 'userId' };
+              };
+            };
+          };
           readonly Role: {
             readonly fields: {
               readonly createdAt: {
@@ -6395,6 +6535,15 @@ type ContractBase = Omit<
           readonly onUpdate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Post';
+            readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'ResponsibleGambling';
             readonly field: 'updatedAt';
             readonly namespace: 'public';
           };

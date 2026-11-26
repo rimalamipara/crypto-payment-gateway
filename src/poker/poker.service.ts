@@ -39,6 +39,7 @@ import {
   POKER_TABLE_STATUS,
   TURN_TIMEOUT_MS,
 } from "./poker.constants.ts";
+import { ResponsibleGamblingService } from "../responsible-gambling/rg.service.ts";
 import { PokerRepository } from "./poker.repository.ts";
 import { GameSettingsService } from "../game-settings/game-settings.service.ts";
 
@@ -103,6 +104,7 @@ export class PokerService extends EventEmitter implements OnModuleInit {
   constructor(
     @Inject(PokerRepository) private readonly repo: PokerRepository,
     @Inject(WalletService) private readonly wallet: WalletService,
+    @Inject(ResponsibleGamblingService) private readonly rg: ResponsibleGamblingService,
     /** Optional so services can still be built by hand (tests); Nest always injects it. */
     @Optional()
     @Inject(GameSettingsService)
@@ -305,6 +307,7 @@ export class PokerService extends EventEmitter implements OnModuleInit {
    * If every matching table is full, a new table is created automatically.
    */
   async joinStake(userId: number, dto: JoinStakeDto) {
+    await this.rg.assertCanPlay(userId);
     const template =
       POKER_STAKE_TEMPLATES.find(
         (t) => t.smallBlind === dto.smallBlind && t.bigBlind === dto.bigBlind,
@@ -330,6 +333,7 @@ export class PokerService extends EventEmitter implements OnModuleInit {
   }
 
   async buyIn(userId: number, tableId: number, dto: BuyInDto) {
+    await this.rg.assertCanPlay(userId);
     let table = await this.repo.findTable(tableId);
     if (!table) throw new NotFoundException("Table not found");
     if (table.status !== POKER_TABLE_STATUS.OPEN) {

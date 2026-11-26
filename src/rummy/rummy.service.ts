@@ -32,6 +32,7 @@ import {
   RUMMY_TABLE_STATUS,
   RUMMY_TURN_TIMEOUT_MS,
 } from "./rummy.constants.ts";
+import { ResponsibleGamblingService } from "../responsible-gambling/rg.service.ts";
 import { RummyRepository } from "./rummy.repository.ts";
 import { GameSettingsService } from "../game-settings/game-settings.service.ts";
 
@@ -61,6 +62,7 @@ export class RummyService extends EventEmitter implements OnModuleInit {
   constructor(
     @Inject(RummyRepository) private readonly repo: RummyRepository,
     @Inject(WalletService) private readonly wallet: WalletService,
+    @Inject(ResponsibleGamblingService) private readonly rg: ResponsibleGamblingService,
     /** Optional so services can still be built by hand (tests); Nest always injects it. */
     @Optional()
     @Inject(GameSettingsService)
@@ -249,6 +251,7 @@ export class RummyService extends EventEmitter implements OnModuleInit {
     tableId: number,
     dto: { amountUsd?: number; seatIndex?: number },
   ) {
+    await this.rg.assertCanPlay(userId);
     const table = await this.repo.findTable(tableId);
     if (!table) throw new NotFoundException("Rummy table not found");
     if (table.status !== RUMMY_TABLE_STATUS.OPEN) {

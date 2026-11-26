@@ -24,6 +24,7 @@ import { PrismaModule } from "./prisma/prisma.module.ts";
 import { RolesModule } from "./roles/roles.module.ts";
 import { KycModule } from "./kyc/kyc.module.ts";
 import { NotificationsModule } from "./notifications/notifications.module.ts";
+import { ResponsibleGamblingModule } from "./responsible-gambling/rg.module.ts";
 import { UsersModule } from "./users/users.module.ts";
 import { WalletModule } from "./wallet/wallet.module.ts";
 
@@ -41,6 +42,7 @@ import { WalletModule } from "./wallet/wallet.module.ts";
     AuthModule,
     RolesModule,
     UsersModule,
+    ResponsibleGamblingModule,
     NotificationsModule,
     KycModule,
     WalletModule,

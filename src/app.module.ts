@@ -22,6 +22,7 @@ import { RummyModule } from "./rummy/rummy.module.ts";
 import { SecureTransportModule } from "./secure-transport/secure-transport.module.ts";
 import { PrismaModule } from "./prisma/prisma.module.ts";
 import { RolesModule } from "./roles/roles.module.ts";
+import { KycModule } from "./kyc/kyc.module.ts";
 import { UsersModule } from "./users/users.module.ts";
 import { WalletModule } from "./wallet/wallet.module.ts";
 
@@ -39,6 +40,7 @@ import { WalletModule } from "./wallet/wallet.module.ts";
     AuthModule,
     RolesModule,
     UsersModule,
+    KycModule,
     WalletModule,
     PaymentsModule,
     PayoutsModule,

@@ -10,6 +10,7 @@ import { ConfigService } from "@nestjs/config";
 import { DEFAULT_ROLES } from "../common/constants/roles.constants.ts";
 import type { AuthenticatedUser } from "../common/interfaces/authenticated-user.interface.ts";
 import { IntegrationLogsService } from "../integration-logs/integration-logs.service.ts";
+import { KycService } from "../kyc/kyc.service.ts";
 import { OxaPayClient } from "../oxapay/oxapay.client.ts";
 import type { OxaPayWebhookPayload } from "../oxapay/oxapay.types.ts";
 import { WalletService } from "../wallet/wallet.service.ts";
@@ -30,6 +31,7 @@ export class PayoutsService {
     @Inject(PayoutsRepository)
     private readonly payoutsRepository: PayoutsRepository,
     @Inject(WalletService) private readonly walletService: WalletService,
+    @Inject(KycService) private readonly kyc: KycService,
     @Inject(OxaPayClient) private readonly oxaPay: OxaPayClient,
     @Inject(ConfigService) private readonly config: ConfigService,
     @Inject(IntegrationLogsService)
@@ -45,6 +47,7 @@ export class PayoutsService {
     if (!(await this.gateways.isEnabled("withdrawals"))) {
       throw new ServiceUnavailableException("Withdrawals are temporarily disabled");
     }
+    await this.kyc.assertWithdrawalAllowed(user.id);
     const currency = dto.currency.trim().toUpperCase();
     const network = dto.network.trim();
     const amountUsd = normalizeUsd(dto.amountUsd);

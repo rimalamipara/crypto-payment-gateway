@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'48f9fc060e42b9fc281348022bd6ec16f2fb90482cd556b4b0c809b805e4da65'>;
+  StorageHashBase<'3ccdeb974df046f517609edb11fe6e6e23cfb08eaab0a89149fe8e800e0c6425'>;
 export type ExecutionHash =
-  ExecutionHashBase<'8077e156b6509947ceb4ba3e484a8930ec046b98e2db44c229113c1bd5dff8c2'>;
+  ExecutionHashBase<'1d1f02df6ab555a13e21640c0481691e19c96d5a1b43badae64c2b697014e588'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -356,6 +356,25 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['GameSetting']['updatedAt'];
     readonly [RelationKeys]?: never;
   };
+  export type public_Kyc = {
+    country: FieldOutputTypes['public']['Kyc']['country'];
+    createdAt: FieldOutputTypes['public']['Kyc']['createdAt'];
+    dateOfBirth: FieldOutputTypes['public']['Kyc']['dateOfBirth'];
+    docBackUrl: FieldOutputTypes['public']['Kyc']['docBackUrl'];
+    docFrontUrl: FieldOutputTypes['public']['Kyc']['docFrontUrl'];
+    docNumber: FieldOutputTypes['public']['Kyc']['docNumber'];
+    docType: FieldOutputTypes['public']['Kyc']['docType'];
+    fullName: FieldOutputTypes['public']['Kyc']['fullName'];
+    id: FieldOutputTypes['public']['Kyc']['id'];
+    rejectReason: FieldOutputTypes['public']['Kyc']['rejectReason'];
+    reviewedAt: FieldOutputTypes['public']['Kyc']['reviewedAt'];
+    reviewedBy: FieldOutputTypes['public']['Kyc']['reviewedBy'];
+    selfieUrl: FieldOutputTypes['public']['Kyc']['selfieUrl'];
+    status: FieldOutputTypes['public']['Kyc']['status'];
+    updatedAt: FieldOutputTypes['public']['Kyc']['updatedAt'];
+    userId: FieldOutputTypes['public']['Kyc']['userId'];
+    readonly [RelationKeys]?: never;
+  };
   export type public_Payment = {
     amount: FieldOutputTypes['public']['Payment']['amount'];
     createdAt: FieldOutputTypes['public']['Payment']['createdAt'];
@@ -683,6 +702,7 @@ export declare const models: {
     ColorBet: Models.public_ColorBet;
     ColorRound: Models.public_ColorRound;
     GameSetting: Models.public_GameSetting;
+    Kyc: Models.public_Kyc;
     Payment: Models.public_Payment;
     PaymentGateway: Models.public_PaymentGateway;
     Payout: Models.public_Payout;
@@ -1339,6 +1359,126 @@ type ContractBase = Omit<
               primaryKey: { readonly columns: readonly ['id'] };
               uniques: readonly [{ readonly columns: readonly ['game'] }];
               indexes: readonly [];
+              foreignKeys: readonly [];
+            };
+            readonly Kyc: {
+              columns: {
+                readonly country: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly many: false;
+                };
+                readonly dateOfBirth: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly docBackUrl: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly docFrontUrl: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly docNumber: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly docType: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly fullName: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly rejectReason: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly reviewedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly reviewedBy: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly selfieUrl: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly status: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'pending'>;
+                  };
+                  readonly many: false;
+                };
+                readonly updatedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly userId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['userId'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'Kyc_status_idx_e98638ab';
+                  readonly prefix: 'Kyc_status_idx';
+                  readonly columns: readonly ['status'];
+                  readonly unique: false;
+                },
+              ];
               foreignKeys: readonly [];
             };
             readonly Payment: {
@@ -3535,6 +3675,7 @@ type ContractBase = Omit<
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'GameSetting';
     };
+    readonly Kyc: { readonly namespace: 'public' & NamespaceId; readonly model: 'Kyc' };
     readonly Payment: { readonly namespace: 'public' & NamespaceId; readonly model: 'Payment' };
     readonly PaymentGateway: {
       readonly namespace: 'public' & NamespaceId;
@@ -4053,6 +4194,106 @@ type ContractBase = Omit<
                 readonly game: { readonly column: 'game' };
                 readonly id: { readonly column: 'id' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+              };
+            };
+          };
+          readonly Kyc: {
+            readonly fields: {
+              readonly country: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly dateOfBirth: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly docBackUrl: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly docFrontUrl: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly docNumber: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly docType: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly fullName: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly rejectReason: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly reviewedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly reviewedBy: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly selfieUrl: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly status: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly userId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+            };
+            readonly relations: Record<string, never>;
+            readonly storage: {
+              readonly table: 'Kyc';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly country: { readonly column: 'country' };
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly dateOfBirth: { readonly column: 'dateOfBirth' };
+                readonly docBackUrl: { readonly column: 'docBackUrl' };
+                readonly docFrontUrl: { readonly column: 'docFrontUrl' };
+                readonly docNumber: { readonly column: 'docNumber' };
+                readonly docType: { readonly column: 'docType' };
+                readonly fullName: { readonly column: 'fullName' };
+                readonly id: { readonly column: 'id' };
+                readonly rejectReason: { readonly column: 'rejectReason' };
+                readonly reviewedAt: { readonly column: 'reviewedAt' };
+                readonly reviewedBy: { readonly column: 'reviewedBy' };
+                readonly selfieUrl: { readonly column: 'selfieUrl' };
+                readonly status: { readonly column: 'status' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly userId: { readonly column: 'userId' };
               };
             };
           };
@@ -5933,6 +6174,15 @@ type ContractBase = Omit<
           readonly onUpdate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'GameSetting';
+            readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'Kyc';
             readonly field: 'updatedAt';
             readonly namespace: 'public';
           };

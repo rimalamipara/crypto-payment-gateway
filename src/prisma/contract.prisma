@@ -469,3 +469,25 @@ model PaymentGateway {
   createdAt TimestamptzString @default(now())
   updatedAt temporal.updatedAtString()
 }
+
+/// Identity + age verification. One row per user; resubmission allowed after rejection.
+model Kyc {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @unique
+  status       String   @default("pending")
+  fullName     String
+  dateOfBirth  String
+  country      String
+  docType      String
+  docNumber    String
+  docFrontUrl  String
+  docBackUrl   String?
+  selfieUrl    String
+  rejectReason String?
+  reviewedBy   Int?
+  reviewedAt   TimestamptzString?
+  createdAt    TimestamptzString @default(now())
+  updatedAt    temporal.updatedAtString()
+
+  @@index([status])
+}

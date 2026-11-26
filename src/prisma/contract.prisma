@@ -8,6 +8,8 @@ model User {
   passwordHash String
   phone        String?  @unique
   googleId     String?  @unique
+  country       String?
+  avatarUrl     String?
   isActive     Boolean  @default(true)
   posts       Post[]
   userRoles    UserRole[]

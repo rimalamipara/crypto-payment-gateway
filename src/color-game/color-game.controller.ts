@@ -33,8 +33,8 @@ export class ColorGameController {
   @Get("current")
   @ApiOperation({ summary: "Current color round + countdown" })
   @ApiOkResponse({ description: "Public round state" })
-  current() {
-    return this.colorGame.getCurrent();
+  current(@Query("durationSec") durationSec?: string) {
+    return this.colorGame.getCurrent(durationSec ? Number(durationSec) : undefined);
   }
 
   @Post("bets")
@@ -65,10 +65,12 @@ export class ColorGameController {
   recent(
     @Query("limit") limit?: string,
     @Query("page") page?: string,
+    @Query("durationSec") durationSec?: string,
   ) {
     return this.colorGame.recentRounds(
       limit ? Number(limit) : 10,
       page ? Number(page) : 1,
+      durationSec ? Number(durationSec) : undefined,
     );
   }
 }

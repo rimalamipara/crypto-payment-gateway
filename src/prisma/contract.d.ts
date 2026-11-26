@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'83a1ad5965352bf8456d472d0ed88453047a80fe462856a8eb151446c2a313d5'>;
+  StorageHashBase<'a25f3bf14180cfdb89dde06268ba4567c8bd08849cab9b6b3ec6e3ffeb6b4b4c'>;
 export type ExecutionHash =
   ExecutionHashBase<'6d64aa872ecb834619a31a9b7ac51bc59869aca790d515b4c86a621f7a12132e'>;
 export type ProfileHash =
@@ -333,6 +333,7 @@ export namespace Models {
   export type public_ColorRound = {
     betsCloseAt: FieldOutputTypes['public']['ColorRound']['betsCloseAt'];
     createdAt: FieldOutputTypes['public']['ColorRound']['createdAt'];
+    durationSec: FieldOutputTypes['public']['ColorRound']['durationSec'];
     forcedByAdmin: FieldOutputTypes['public']['ColorRound']['forcedByAdmin'];
     id: FieldOutputTypes['public']['ColorRound']['id'];
     periodNo: FieldOutputTypes['public']['ColorRound']['periodNo'];
@@ -1171,6 +1172,16 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-string@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly many: false;
+                };
+                readonly durationSec: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 180>;
+                  };
                   readonly many: false;
                 };
                 readonly forcedByAdmin: {
@@ -3816,6 +3827,10 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-string@1';
                 };
               };
+              readonly durationSec: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly forcedByAdmin: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
@@ -3892,6 +3907,7 @@ type ContractBase = Omit<
               readonly fields: {
                 readonly betsCloseAt: { readonly column: 'betsCloseAt' };
                 readonly createdAt: { readonly column: 'createdAt' };
+                readonly durationSec: { readonly column: 'durationSec' };
                 readonly forcedByAdmin: { readonly column: 'forcedByAdmin' };
                 readonly id: { readonly column: 'id' };
                 readonly periodNo: { readonly column: 'periodNo' };

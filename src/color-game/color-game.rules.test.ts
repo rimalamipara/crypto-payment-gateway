@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { pickProfitMaximizingResult } from "./color-game.rules.ts";
+import {
+  isValidDuration,
+  lockMs,
+  pickProfitMaximizingResult,
+} from "./color-game.rules.ts";
 
 describe("pickProfitMaximizingResult", () => {
   it("picks the digit with highest house P/L when admin leaves unset", () => {
@@ -28,5 +32,18 @@ describe("pickProfitMaximizingResult", () => {
 
   it("random when no bets", () => {
     expect(pickProfitMaximizingResult([], () => 3)).toBe(3);
+  });
+});
+
+describe("session durations", () => {
+  it("accepts 1/3/5/10 minutes only", () => {
+    for (const s of [60, 180, 300, 600]) expect(isValidDuration(s)).toBe(true);
+    for (const s of [0, 30, 120, 3600]) expect(isValidDuration(s)).toBe(false);
+  });
+
+  it("locks the last 10s of a 1-minute round and 30s of longer ones", () => {
+    expect(lockMs(60)).toBe(10_000);
+    expect(lockMs(180)).toBe(30_000);
+    expect(lockMs(600)).toBe(30_000);
   });
 });

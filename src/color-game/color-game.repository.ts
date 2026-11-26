@@ -23,22 +23,26 @@ export class ColorGameRepository {
     return this.orm.ColorRound.where({ periodNo }).first();
   }
 
-  async findOpenRound() {
+  async findOpenRound(durationSec: number) {
     const betting = await this.orm.ColorRound.where({
       status: COLOR_ROUND_STATUS.BETTING,
+      durationSec,
     })
       .orderBy((r) => r.periodNo.desc())
       .first();
     if (betting) return betting;
     return this.orm.ColorRound.where({
       status: COLOR_ROUND_STATUS.LOCKED,
+      durationSec,
     })
       .orderBy((r) => r.periodNo.desc())
       .first();
   }
 
-  async findLatestRound() {
-    return this.orm.ColorRound.orderBy((r) => r.periodNo.desc()).first();
+  async findLatestRound(durationSec: number) {
+    return this.orm.ColorRound.where({ durationSec })
+      .orderBy((r) => r.periodNo.desc())
+      .first();
   }
 
   async maxPeriodNo(): Promise<number> {
@@ -53,6 +57,7 @@ export class ColorGameRepository {
     startsAt: string;
     betsCloseAt: string;
     revealsAt: string;
+    durationSec: number;
     presetNumber?: number | null;
   }) {
     return this.orm.ColorRound.create({
@@ -61,6 +66,7 @@ export class ColorGameRepository {
       startsAt: data.startsAt,
       betsCloseAt: data.betsCloseAt,
       revealsAt: data.revealsAt,
+      durationSec: data.durationSec,
       forcedByAdmin: false,
       presetNumber: data.presetNumber ?? null,
     });
@@ -141,11 +147,11 @@ export class ColorGameRepository {
     return { items, total: Number(agg.count ?? 0) };
   }
 
-  async listRecentRounds(limit = 10, page = 1) {
+  async listRecentRounds(durationSec: number, limit = 10, page = 1) {
     const safeLimit = Math.min(Math.max(1, limit), 50);
     const safePage = Math.max(1, page);
     const offset = (safePage - 1) * safeLimit;
-    const settled = { status: COLOR_ROUND_STATUS.SETTLED };
+    const settled = { status: COLOR_ROUND_STATUS.SETTLED, durationSec };
 
     const [agg, items] = await Promise.all([
       this.orm.ColorRound.where(settled).aggregate((a) => ({
@@ -193,8 +199,11 @@ export class ColorGameRepository {
     };
   }
 
-  async findLatestSettledRound() {
-    return this.orm.ColorRound.where({ status: COLOR_ROUND_STATUS.SETTLED })
+  async findLatestSettledRound(durationSec: number) {
+    return this.orm.ColorRound.where({
+      status: COLOR_ROUND_STATUS.SETTLED,
+      durationSec,
+    })
       .orderBy((r) => r.periodNo.desc())
       .first();
   }

@@ -130,10 +130,22 @@ export function isValidSelection(betType: BetType, selection: string): boolean {
   return false;
 }
 
-/** Full period length: 3 minutes. */
-export const ROUND_MS = 3 * 60_000;
-/** Last 30s are locked (no new bets) — betting open for 2.5 minutes. */
-export const LOCK_MS = 30_000;
+/** Supported session lengths in seconds: 1, 3, 5 and 10 minutes. */
+export const ROUND_DURATIONS_SEC = [60, 180, 300, 600] as const;
+export const DEFAULT_DURATION_SEC = 180;
+
+export function isValidDuration(sec: number): boolean {
+  return (ROUND_DURATIONS_SEC as readonly number[]).includes(sec);
+}
+
+export function roundMs(durationSec: number): number {
+  return durationSec * 1000;
+}
+
+/** Last 30s are locked (no new bets); 1-minute sessions lock the last 10s. */
+export function lockMs(durationSec: number): number {
+  return Math.min(30_000, (durationSec * 1000) / 6);
+}
 
 /**
  * Period display name: year month date hour minute periodCount (no separators)

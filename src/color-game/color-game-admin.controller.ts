@@ -31,8 +31,10 @@ export class ColorGameAdminController {
   @Get("current")
   @ApiOperation({ summary: "Live round + bet tallies (admin)" })
   @ApiForbiddenResponse({ description: "Requires admin" })
-  current() {
-    return this.colorGame.getCurrentAdmin();
+  current(@Query("durationSec") durationSec?: string) {
+    return this.colorGame.getCurrentAdmin(
+      durationSec ? Number(durationSec) : undefined,
+    );
   }
 
   @Get("rounds")
@@ -53,7 +55,7 @@ export class ColorGameAdminController {
     summary: "Queue winning number for current (or next) round",
   })
   preset(@Body() dto: ColorNumberDto) {
-    return this.colorGame.adminPreset(dto.number);
+    return this.colorGame.adminPreset(dto.number, dto.durationSec);
   }
 
   @Post("reveal")
@@ -61,7 +63,7 @@ export class ColorGameAdminController {
     summary: "Reveal & settle after reveal time with given number",
   })
   reveal(@Body() dto: ColorNumberDto) {
-    return this.colorGame.adminReveal(dto.number);
+    return this.colorGame.adminReveal(dto.number, dto.durationSec);
   }
 
   @Post("force-reveal")
@@ -70,15 +72,17 @@ export class ColorGameAdminController {
     deprecated: true,
   })
   forceReveal(@Body() dto: ColorNumberDto) {
-    return this.colorGame.adminReveal(dto.number);
+    return this.colorGame.adminReveal(dto.number, dto.durationSec);
   }
 
   @Post("cancel")
   @ApiOperation({
     summary: "Cancel draw after reveal time — refund bets, skip result",
   })
-  cancel() {
-    return this.colorGame.adminCancelDraw();
+  cancel(@Query("durationSec") durationSec?: string) {
+    return this.colorGame.adminCancelDraw(
+      durationSec ? Number(durationSec) : undefined,
+    );
   }
 
   @Get("stats/overview")

@@ -8,6 +8,8 @@ model User {
   passwordHash String
   phone        String?  @unique
   googleId     String?  @unique
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean @default(false)
   country       String?
   avatarUrl     String?
   isActive     Boolean  @default(true)

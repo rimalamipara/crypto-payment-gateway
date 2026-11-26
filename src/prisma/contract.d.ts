@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'3ccdeb974df046f517609edb11fe6e6e23cfb08eaab0a89149fe8e800e0c6425'>;
+  StorageHashBase<'29c9de69103315ec095b3ed71d72c8f8a9718498a58a134be7d51a9e13cc986b'>;
 export type ExecutionHash =
   ExecutionHashBase<'1d1f02df6ab555a13e21640c0481691e19c96d5a1b43badae64c2b697014e588'>;
 export type ProfileHash =
@@ -612,6 +612,8 @@ export namespace Models {
     name: FieldOutputTypes['public']['User']['name'];
     passwordHash: FieldOutputTypes['public']['User']['passwordHash'];
     phone: FieldOutputTypes['public']['User']['phone'];
+    twoFactorEnabled: FieldOutputTypes['public']['User']['twoFactorEnabled'];
+    twoFactorSecret: FieldOutputTypes['public']['User']['twoFactorSecret'];
     updatedAt: FieldOutputTypes['public']['User']['updatedAt'];
     username: FieldOutputTypes['public']['User']['username'];
     colorBets: public_ColorBet[];
@@ -3219,6 +3221,22 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly twoFactorEnabled: {
+                  readonly dataType: 'pg/bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', false>;
+                  };
+                  readonly many: false;
+                };
+                readonly twoFactorSecret: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly updatedAt: {
                   readonly dataType: 'pg/timestamptz';
                   readonly codecId: 'pg/timestamptz-string@1';
@@ -5661,6 +5679,14 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly twoFactorEnabled: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
+              readonly twoFactorSecret: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly updatedAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -5808,6 +5834,8 @@ type ContractBase = Omit<
                 readonly name: { readonly column: 'name' };
                 readonly passwordHash: { readonly column: 'passwordHash' };
                 readonly phone: { readonly column: 'phone' };
+                readonly twoFactorEnabled: { readonly column: 'twoFactorEnabled' };
+                readonly twoFactorSecret: { readonly column: 'twoFactorSecret' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
                 readonly username: { readonly column: 'username' };
               };

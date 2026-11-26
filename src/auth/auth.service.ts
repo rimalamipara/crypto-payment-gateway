@@ -13,6 +13,7 @@ import * as bcrypt from "bcrypt";
 
 import { PrismaService } from "../prisma/prisma.service.ts";
 import { RolesService } from "../roles/roles.service.ts";
+import { decryptSecret, encryptSecret, generateSecret, verifyTotp } from "./totp.ts";
 import type { LoginDto } from "./dto/login.dto.ts";
 import type { RegisterDto } from "./dto/register.dto.ts";
 
@@ -22,6 +23,11 @@ export interface AuthUserView {
   username: string | null;
   name: string | null;
   roles: string[];
+}
+
+export interface TwoFactorChallenge {
+  twoFactorRequired: true;
+  twoFactorToken: string;
 }
 
 export interface AuthTokensResponse {
@@ -76,7 +82,7 @@ export class AuthService {
     });
   }
 
-  async login(dto: LoginDto): Promise<AuthTokensResponse> {
+  async login(dto: LoginDto): Promise<AuthTokensResponse | TwoFactorChallenge> {
     if (!dto.email && !dto.phone) {
       throw new BadRequestException("Provide email or phone");
     }
@@ -92,10 +98,10 @@ export class AuthService {
     if (!(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException("Invalid credentials");
     }
-    return this.issueFor(user);
+    return this.issueOrChallenge(user);
   }
 
-  async loginWithGoogle(idToken: string): Promise<AuthTokensResponse> {
+  async loginWithGoogle(idToken: string): Promise<AuthTokensResponse | TwoFactorChallenge> {
     const clientId = this.configService.get<string>("google.clientId", "");
     if (!clientId) {
       throw new BadRequestException("Google login is not configured");
@@ -144,7 +150,86 @@ export class AuthService {
       });
       await this.rolesService.ensureDefaultUserRole(user.id);
     }
+    return this.issueOrChallenge(user);
+  }
+
+  /** Challenge token uses a different secret than access tokens, so it can never be used as one. */
+  private get challengeSecret() {
+    return `${this.configService.getOrThrow<string>("jwt.secret")}:2fa`;
+  }
+
+  private get jwtSecret() {
+    return this.configService.getOrThrow<string>("jwt.secret");
+  }
+
+  private async issueOrChallenge(user: {
+    id: number;
+    email: string;
+    username?: string | null;
+    name?: string | null;
+    twoFactorEnabled?: boolean;
+  }): Promise<AuthTokensResponse | TwoFactorChallenge> {
+    if (!user.twoFactorEnabled) return this.issueFor(user);
+    const twoFactorToken = await this.jwtService.signAsync(
+      { sub: user.id },
+      { secret: this.challengeSecret, expiresIn: "5m" },
+    );
+    return { twoFactorRequired: true, twoFactorToken };
+  }
+
+  async loginWithTwoFactor(twoFactorToken: string, code: string): Promise<AuthTokensResponse> {
+    let userId: number;
+    try {
+      ({ sub: userId } = await this.jwtService.verifyAsync<{ sub: number }>(twoFactorToken, {
+        secret: this.challengeSecret,
+      }));
+    } catch {
+      throw new UnauthorizedException("Invalid or expired 2FA token");
+    }
+    const user = await this.prisma.client.orm.public.User.where({ id: userId }).first();
+    if (!user || !user.isActive || !user.twoFactorEnabled || !user.twoFactorSecret) {
+      throw new UnauthorizedException("Invalid or expired 2FA token");
+    }
+    if (!verifyTotp(decryptSecret(user.twoFactorSecret, this.jwtSecret), code)) {
+      throw new UnauthorizedException("Invalid 2FA code");
+    }
     return this.issueFor(user);
+  }
+
+  async setupTwoFactor(userId: number) {
+    const users = this.prisma.client.orm.public.User;
+    const user = await users.where({ id: userId }).first();
+    if (!user) throw new UnauthorizedException("User not found");
+    if (user.twoFactorEnabled) throw new ConflictException("2FA is already enabled");
+    const secret = generateSecret();
+    await users.where({ id: userId }).update({ twoFactorSecret: encryptSecret(secret, this.jwtSecret) });
+    const label = encodeURIComponent(`Gateway:${user.email}`);
+    return { secret, otpauthUrl: `otpauth://totp/${label}?secret=${secret}&issuer=Gateway` };
+  }
+
+  async enableTwoFactor(userId: number, code: string) {
+    const users = this.prisma.client.orm.public.User;
+    const user = await users.where({ id: userId }).first();
+    if (!user?.twoFactorSecret) throw new BadRequestException("Call /auth/2fa/setup first");
+    if (!verifyTotp(decryptSecret(user.twoFactorSecret, this.jwtSecret), code)) {
+      throw new BadRequestException("Invalid 2FA code");
+    }
+    await users.where({ id: userId }).update({ twoFactorEnabled: true });
+    return { enabled: true };
+  }
+
+  async disableTwoFactor(userId: number, password: string, code: string) {
+    const users = this.prisma.client.orm.public.User;
+    const user = await users.where({ id: userId }).first();
+    if (!user?.twoFactorEnabled || !user.twoFactorSecret) throw new BadRequestException("2FA is not enabled");
+    if (
+      !(await bcrypt.compare(password, user.passwordHash)) ||
+      !verifyTotp(decryptSecret(user.twoFactorSecret, this.jwtSecret), code)
+    ) {
+      throw new UnauthorizedException("Invalid password or 2FA code");
+    }
+    await users.where({ id: userId }).update({ twoFactorEnabled: false, twoFactorSecret: null });
+    return { enabled: false };
   }
 
   private findByPhone(phone: string) {

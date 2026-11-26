@@ -3256,6 +3256,20 @@
                   "kind": "scalar"
                 }
               },
+              "twoFactorEnabled": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "twoFactorSecret": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -3470,6 +3484,12 @@
                 },
                 "phone": {
                   "column": "phone"
+                },
+                "twoFactorEnabled": {
+                  "column": "twoFactorEnabled"
+                },
+                "twoFactorSecret": {
+                  "column": "twoFactorSecret"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -6710,6 +6730,20 @@
                   "dataType": "pg/text",
                   "nullable": true
                 },
+                "twoFactorEnabled": {
+                  "codecId": "pg/bool@1",
+                  "dataType": "pg/bool",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nullable": false
+                },
+                "twoFactorSecret": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "dataType": "pg/timestamptz",
@@ -7212,7 +7246,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "3ccdeb974df046f517609edb11fe6e6e23cfb08eaab0a89149fe8e800e0c6425"
+    "storageHash": "29c9de69103315ec095b3ed71d72c8f8a9718498a58a134be7d51a9e13cc986b"
   },
   "execution": {
     "executionHash": "1d1f02df6ab555a13e21640c0481691e19c96d5a1b43badae64c2b697014e588",

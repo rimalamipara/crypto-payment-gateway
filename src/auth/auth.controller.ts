@@ -25,6 +25,7 @@ import {
   AuthUserDto,
 } from "./dto/auth-response.dto.ts";
 import { GoogleLoginDto } from "./dto/google-login.dto.ts";
+import { DisableTwoFactorDto, TwoFactorCodeDto, TwoFactorLoginDto } from "./dto/two-factor.dto.ts";
 import { LoginDto } from "./dto/login.dto.ts";
 import { RegisterDto } from "./dto/register.dto.ts";
 
@@ -58,6 +59,39 @@ export class AuthController {
   @ApiOkResponse({ type: () => AuthTokensResponseDto })
   google(@Body() dto: GoogleLoginDto) {
     return this.authService.loginWithGoogle(dto.idToken);
+  }
+
+  @Public()
+  @Post("2fa/login")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Complete login with the TOTP code after a twoFactorRequired response" })
+  @ApiOkResponse({ type: () => AuthTokensResponseDto })
+  twoFactorLogin(@Body() dto: TwoFactorLoginDto) {
+    return this.authService.loginWithTwoFactor(dto.twoFactorToken, dto.code);
+  }
+
+  @Post("2fa/setup")
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Generate a TOTP secret + otpauth URL (not active until /2fa/enable)" })
+  twoFactorSetup(@CurrentUser() user: AuthenticatedUser) {
+    return this.authService.setupTwoFactor(user.id);
+  }
+
+  @Post("2fa/enable")
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Activate 2FA by confirming a code" })
+  twoFactorEnable(@CurrentUser() user: AuthenticatedUser, @Body() dto: TwoFactorCodeDto) {
+    return this.authService.enableTwoFactor(user.id, dto.code);
+  }
+
+  @Post("2fa/disable")
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Disable 2FA (needs password + current code)" })
+  twoFactorDisable(@CurrentUser() user: AuthenticatedUser, @Body() dto: DisableTwoFactorDto) {
+    return this.authService.disableTwoFactor(user.id, dto.password, dto.code);
   }
 
   @Get("me")
